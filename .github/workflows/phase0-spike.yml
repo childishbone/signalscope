@@ -1,0 +1,20 @@
+name: Phase 0 spike
+
+on:
+  workflow_dispatch:
+
+jobs:
+  spike:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install yfinance pandas
+      - name: Market coverage spike
+        run: python spikes/phase0/spike.py
+      - name: NaN inspection
+        if: always()
+        run: python spikes/phase0/spike_nan.py
