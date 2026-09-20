@@ -60,8 +60,10 @@ def check_search(query: str) -> None:
 
 def main() -> None:
     print(f"yfinance version: {yf.__version__}\n")
-    print(f"{'Market':<11}{'Symbol':<11}{'Status':<8}{'Bars':<6}{'Last date':<12}"
-          f"{'Close':<12}{'Volume':<14}{'Exchange':<10}{'Ccy'}")
+    print(
+        f"{'Market':<11}{'Symbol':<11}{'Status':<8}{'Bars':<6}{'Last date':<12}"
+        f"{'Close':<12}{'Volume':<14}{'Exchange':<10}{'Ccy'}"
+    )
     print("-" * 95)
 
     failures = 0
@@ -71,9 +73,11 @@ def main() -> None:
             if r["status"] != "OK":
                 failures += 1
             if "bars" in r:
-                print(f"{market:<11}{r['symbol']:<11}{r['status']:<8}{r['bars']:<6}"
-                      f"{r['last_date']:<12}{r['last_close']:<12}{r['volume']:<14}"
-                      f"{r['exchange']:<10}{r['currency']}")
+                print(
+                    f"{market:<11}{r['symbol']:<11}{r['status']:<8}{r['bars']:<6}"
+                    f"{r['last_date']:<12}{r['last_close']:<12}{r['volume']:<14}"
+                    f"{r['exchange']:<10}{r['currency']}"
+                )
             else:
                 print(f"{market:<11}{r['symbol']:<11}{r['status']}")
             time.sleep(1.5)  # be polite; avoids tripping Yahoo's rate limiter
