@@ -5,11 +5,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from signalscope.api.deps import require_admin
-from signalscope.api.schemas import SecurityIn, WatchlistItemOut
+from signalscope.api.schemas import AddByProviderSymbolIn, WatchlistItemOut
 from signalscope.db.models import Security, WatchlistItem
 from signalscope.db.session import get_db
+from signalscope.market_data.yahoo import YahooProvider
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
+
+_provider = YahooProvider()
 
 
 @router.get("", response_model=list[WatchlistItemOut])
@@ -24,15 +27,32 @@ def list_watchlist(db: Session = Depends(get_db)) -> list[WatchlistItem]:
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_admin)],
 )
-def add_to_watchlist(payload: SecurityIn, db: Session = Depends(get_db)) -> WatchlistItem:
+def add_to_watchlist(
+    payload: AddByProviderSymbolIn, db: Session = Depends(get_db)
+) -> WatchlistItem:
     security = db.scalar(
-        select(Security).where(
-            Security.exchange_code == payload.exchange_code,
-            Security.symbol == payload.symbol,
-        )
+        select(Security).where(Security.provider_symbol == payload.provider_symbol)
     )
+
     if security is None:
-        security = Security(**payload.model_dump())
+        # Not cached yet: look it up via the provider (a single, cheap Yahoo call).
+        matches = _provider.search_securities(payload.provider_symbol, limit=5)
+        exact = next((m for m in matches if m.provider_symbol == payload.provider_symbol), None)
+        if exact is None:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                f"'{payload.provider_symbol}' was not found in a supported market",
+            )
+        security = Security(
+            symbol=exact.symbol,
+            exchange_code=exact.exchange_code,
+            exchange_name=exact.exchange_name,
+            country=exact.country,
+            currency=exact.currency,
+            name=exact.name,
+            asset_type=exact.asset_type,
+            provider_symbol=exact.provider_symbol,
+        )
         db.add(security)
         db.flush()  # assigns security.id without committing yet
 

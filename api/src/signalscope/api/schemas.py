@@ -37,3 +37,22 @@ class WatchlistItemOut(BaseModel):
     id: int
     added_at: datetime
     security: SecurityOut
+
+
+class SecurityMatchOut(BaseModel):
+    """One search result. Field names match market_data.types.SecurityMatch."""
+
+    symbol: str
+    provider_symbol: str
+    name: str
+    exchange_code: str
+    exchange_name: str
+    country: str
+    currency: str
+    asset_type: str
+
+
+class AddByProviderSymbolIn(BaseModel):
+    """What the Watchlist page actually sends: just the ticker the user picked."""
+
+    provider_symbol: str = Field(min_length=1, max_length=20)

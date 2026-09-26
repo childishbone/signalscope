@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from signalscope.api.routers import watchlist
+from signalscope.api.routers import securities, watchlist
 from signalscope.config import get_settings
 
 app = FastAPI(title="SignalScope API")
@@ -18,6 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(watchlist.router)
+app.include_router(securities.router)
 
 
 @app.get("/health")
