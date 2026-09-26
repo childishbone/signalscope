@@ -16,6 +16,7 @@ dependencies = [
     "pydantic-settings>=2.4",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
+    "yfinance>=0.2.66",
 ]
 
 [project.optional-dependencies]
@@ -49,3 +50,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Header"]
 strict = true
 python_version = "3.12"
 files = ["src"]
+
+[[tool.mypy.overrides]]
+module = "yfinance.*"
+ignore_missing_imports = true
