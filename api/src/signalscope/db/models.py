@@ -16,7 +16,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from signalscope.db.base import Base
 
@@ -51,6 +51,7 @@ class WatchlistItem(Base):
     security_id: Mapped[int] = mapped_column(
         ForeignKey("securities.id", ondelete="CASCADE"), unique=True
     )
+    security: Mapped["Security"] = relationship()
     added_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 
