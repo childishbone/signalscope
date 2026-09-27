@@ -5,10 +5,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from signalscope.api.deps import require_admin
-from signalscope.api.schemas import AddByProviderSymbolIn, WatchlistItemOut
+from signalscope.api.schemas import AddByProviderSymbolIn, QuoteOut, SecurityOut, WatchlistItemOut
 from signalscope.db.models import Security, WatchlistItem
 from signalscope.db.session import get_db
 from signalscope.market_data.yahoo import YahooProvider
+from signalscope.services.bars import compute_snapshot, refresh_bars
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
 
@@ -16,9 +17,20 @@ _provider = YahooProvider()
 
 
 @router.get("", response_model=list[WatchlistItemOut])
-def list_watchlist(db: Session = Depends(get_db)) -> list[WatchlistItem]:
+def list_watchlist(db: Session = Depends(get_db)) -> list[WatchlistItemOut]:
     stmt = select(WatchlistItem).join(Security).order_by(Security.symbol)
-    return list(db.scalars(stmt))
+    items = list(db.scalars(stmt))
+
+    def to_out(item: WatchlistItem) -> WatchlistItemOut:
+        snapshot = compute_snapshot(db, item.security_id)
+        return WatchlistItemOut(
+            id=item.id,
+            added_at=item.added_at,
+            security=SecurityOut.model_validate(item.security),
+            quote=QuoteOut(**snapshot.__dict__) if snapshot else None,
+        )
+
+    return [to_out(item) for item in items]
 
 
 @router.post(
@@ -35,7 +47,6 @@ def add_to_watchlist(
     )
 
     if security is None:
-        # Not cached yet: look it up via the provider (a single, cheap Yahoo call).
         matches = _provider.search_securities(payload.provider_symbol, limit=5)
         exact = next((m for m in matches if m.provider_symbol == payload.provider_symbol), None)
         if exact is None:
@@ -65,6 +76,19 @@ def add_to_watchlist(
     db.commit()
     db.refresh(item)
     return item
+
+
+@router.post(
+    "/{item_id}/refresh",
+    dependencies=[Depends(require_admin)],
+)
+def refresh_watchlist_item(item_id: int, db: Session = Depends(get_db)) -> dict[str, int]:
+    """Manual trigger for now; Phase 12 replaces this with a scheduled job."""
+    item = db.get(WatchlistItem, item_id)
+    if item is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Watchlist item not found")
+    bars_written = refresh_bars(db, item.security, _provider)
+    return {"bars_written": bars_written}
 
 
 @router.delete(

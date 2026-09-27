@@ -1,6 +1,7 @@
 """Pydantic request/response models for the API."""
 
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -31,12 +32,23 @@ class SecurityOut(BaseModel):
     provider_symbol: str
 
 
+class QuoteOut(BaseModel):
+    latest_price: Decimal
+    latest_date: date
+    change: Decimal
+    change_pct: Decimal
+    volume: int
+    high_52w: Decimal
+    low_52w: Decimal
+
+
 class WatchlistItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     added_at: datetime
     security: SecurityOut
+    quote: QuoteOut | None = None
 
 
 class SecurityMatchOut(BaseModel):
