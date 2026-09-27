@@ -7,8 +7,8 @@ from enum import StrEnum
 
 
 class SignalState(StrEnum):
-    """The three states every indicator (and the future Overall signal)
-    is classified into."""
+    """The three states every indicator (and the Overall signal) is
+    classified into."""
 
     BULLISH = "bullish"
     NEUTRAL = "neutral"
@@ -19,14 +19,15 @@ class SignalState(StrEnum):
 class IndicatorResult:
     """The output of scoring one indicator for one security on one day.
 
-    `score` is a small signed integer (not normalised) that fed into the
-    `state` classification -- kept on the result so the Overall signal can
-    later combine several indicators' scores with a documented weighting
-    scheme, and so a detail screen can show the reader exactly how the
-    verdict was reached.
+    `score` is a small signed number that fed into the `state`
+    classification -- kept on the result so a detail screen can show the
+    reader exactly how the verdict was reached. Individual indicators use
+    whole numbers; the Overall signal (which combines several indicators
+    via a weighted average) uses a fraction, hence `float` rather than
+    `int`.
     """
 
     state: SignalState
-    score: int
+    score: float
     reasons: list[str] = field(default_factory=list)
     values: dict[str, float] = field(default_factory=dict)
