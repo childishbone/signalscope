@@ -1,6 +1,13 @@
 "use client";
 
-import { AlertCircle, Loader2, Search, Trash2, X } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
@@ -11,10 +18,26 @@ import {
   type ApiSecurityMatch,
   type ApiWatchlistItem,
   getWatchlist,
+  refreshWatchlistItem,
   removeFromWatchlist,
   searchSecurities,
 } from "@/lib/api";
+import {
+  formatChange,
+  formatPercent,
+  formatPrice,
+  formatVolume,
+} from "@/lib/format";
 import { useAdminKey } from "@/lib/use-admin-key";
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd className="mt-1 font-mono text-sm">{value}</dd>
+    </div>
+  );
+}
 
 export default function WatchlistPage() {
   const { ensureAdminKey } = useAdminKey();
@@ -27,6 +50,7 @@ export default function WatchlistPage() {
   const [results, setResults] = useState<ApiSecurityMatch[]>([]);
   const [searching, setSearching] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -35,9 +59,13 @@ export default function WatchlistPage() {
       const items = await getWatchlist();
       setWatchlist(items);
       setLoadError(null);
-      setSelectedId((current) => current ?? (items.length > 0 ? items[0].id : null));
+      setSelectedId(
+        (current) => current ?? (items.length > 0 ? items[0].id : null),
+      );
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Failed to load watchlist");
+      setLoadError(
+        err instanceof Error ? err.message : "Failed to load watchlist",
+      );
     } finally {
       setLoading(false);
     }
@@ -85,7 +113,9 @@ export default function WatchlistPage() {
       await refreshWatchlist();
       setSelectedId(item.id);
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : "Failed to add security");
+      setActionError(
+        err instanceof ApiError ? err.message : "Failed to add security",
+      );
     }
   }
 
@@ -98,15 +128,39 @@ export default function WatchlistPage() {
       if (selectedId === itemId) setSelectedId(null);
       await refreshWatchlist();
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : "Failed to remove security");
+      setActionError(
+        err instanceof ApiError ? err.message : "Failed to remove security",
+      );
     }
   }
 
-  const selected = watchlist.find((w) => w.id === selectedId)?.security;
+  async function handleRefreshData(itemId: number) {
+    const key = ensureAdminKey();
+    if (!key) return;
+    setActionError(null);
+    setRefreshing(true);
+    try {
+      await refreshWatchlistItem(itemId, key);
+      await refreshWatchlist();
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError ? err.message : "Failed to refresh data",
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  const selectedItem = watchlist.find((w) => w.id === selectedId);
+  const selected = selectedItem?.security;
+  const quote = selectedItem?.quote;
 
   return (
     <>
-      <PageHeader title="Watchlist" description="Search for securities and manage your list." />
+      <PageHeader
+        title="Watchlist"
+        description="Search for securities and manage your list."
+      />
 
       {loadError && (
         <div className="mb-4 flex items-center gap-2 rounded-md border border-signal-bearish/30 bg-signal-bearish/10 px-3 py-2 text-sm text-signal-bearish">
@@ -159,7 +213,9 @@ export default function WatchlistPage() {
                       onClick={() => handleAdd(match)}
                       className="block w-full px-3 py-2 text-left text-sm hover:bg-panel-hover"
                     >
-                      <span className="font-mono font-medium">{match.symbol}</span>
+                      <span className="font-mono font-medium">
+                        {match.symbol}
+                      </span>
                       <span className="text-muted"> — {match.name}</span>
                       <span className="block text-xs text-muted">
                         {match.exchange_name} — {match.country}
@@ -172,7 +228,9 @@ export default function WatchlistPage() {
           </div>
 
           {loading ? (
-            <p className="p-8 text-center text-sm text-muted">Loading watchlist…</p>
+            <p className="p-8 text-center text-sm text-muted">
+              Loading watchlist…
+            </p>
           ) : watchlist.length === 0 ? (
             <p className="p-8 text-center text-sm text-muted">
               Your watchlist is empty. Search above to add a security.
@@ -189,11 +247,18 @@ export default function WatchlistPage() {
                     onClick={() => setSelectedId(item.id)}
                     aria-pressed={selectedId === item.id}
                     className={`flex-1 px-4 py-3 text-left transition-colors ${
-                      selectedId === item.id ? "bg-panel-hover" : "hover:bg-panel-hover"
+                      selectedId === item.id
+                        ? "bg-panel-hover"
+                        : "hover:bg-panel-hover"
                     }`}
                   >
-                    <span className="font-mono text-sm font-medium">{item.security.symbol}</span>
-                    <span className="text-sm text-muted"> — {item.security.name}</span>
+                    <span className="font-mono text-sm font-medium">
+                      {item.security.symbol}
+                    </span>
+                    <span className="text-sm text-muted">
+                      {" "}
+                      — {item.security.name}
+                    </span>
                     <span className="block text-xs text-muted">
                       {item.security.exchange_name} — {item.security.country}
                     </span>
@@ -215,19 +280,77 @@ export default function WatchlistPage() {
         <Panel>
           {selected ? (
             <div className="p-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h2 className="text-lg font-semibold">{selected.name}</h2>
                   <p className="text-sm text-muted">
-                    <span className="font-mono">{selected.symbol}</span> · {selected.exchange_name}{" "}
-                    · {selected.country}
+                    <span className="font-mono">{selected.symbol}</span> ·{" "}
+                    {selected.exchange_name} · {selected.country}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    selectedItem && handleRefreshData(selectedItem.id)
+                  }
+                  disabled={refreshing}
+                  className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted hover:bg-panel-hover disabled:opacity-50"
+                >
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`}
+                    aria-hidden
+                  />
+                  {refreshing ? "Refreshing…" : "Refresh data"}
+                </button>
               </div>
 
-              <div className="mt-6 rounded-md border border-dashed border-border p-4 text-sm text-muted">
-                Live price, change and 52-week range arrive once daily bars are stored (Phase 4D).
-              </div>
+              {quote ? (
+                <>
+                  <div className="mt-4 flex items-baseline gap-3">
+                    <p className="font-mono text-2xl font-semibold">
+                      {formatPrice(
+                        Number(quote.latest_price),
+                        selected.currency,
+                      )}
+                    </p>
+                    <p
+                      className={`font-mono text-sm ${
+                        Number(quote.change) >= 0
+                          ? "text-signal-bullish"
+                          : "text-signal-bearish"
+                      }`}
+                    >
+                      {formatChange(Number(quote.change))} (
+                      {formatPercent(Number(quote.change_pct))})
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted">
+                    As of {quote.latest_date}
+                  </p>
+
+                  <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    <Stat label="Volume" value={formatVolume(quote.volume)} />
+                    <Stat
+                      label="52-week high"
+                      value={formatPrice(
+                        Number(quote.high_52w),
+                        selected.currency,
+                      )}
+                    />
+                    <Stat
+                      label="52-week low"
+                      value={formatPrice(
+                        Number(quote.low_52w),
+                        selected.currency,
+                      )}
+                    />
+                  </dl>
+                </>
+              ) : (
+                <div className="mt-6 rounded-md border border-dashed border-border p-4 text-sm text-muted">
+                  No price data yet. Click &quot;Refresh data&quot; to fetch it.
+                </div>
+              )}
 
               <div className="mt-4 flex h-56 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted">
                 Price chart arrives in a later phase

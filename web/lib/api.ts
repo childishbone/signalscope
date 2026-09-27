@@ -12,10 +12,21 @@ export interface ApiSecurity {
   provider_symbol: string;
 }
 
+export interface ApiQuote {
+  latest_price: string;
+  latest_date: string;
+  change: string;
+  change_pct: string;
+  volume: number;
+  high_52w: string;
+  low_52w: string;
+}
+
 export interface ApiWatchlistItem {
   id: number;
   added_at: string;
   security: ApiSecurity;
+  quote: ApiQuote | null;
 }
 
 export interface ApiSecurityMatch {
@@ -74,6 +85,16 @@ export function removeFromWatchlist(
 ): Promise<void> {
   return request<void>(`/api/watchlist/${itemId}`, {
     method: "DELETE",
+    headers: { "X-Admin-Key": adminKey },
+  });
+}
+
+export function refreshWatchlistItem(
+  itemId: number,
+  adminKey: string,
+): Promise<{ bars_written: number }> {
+  return request<{ bars_written: number }>(`/api/watchlist/${itemId}/refresh`, {
+    method: "POST",
     headers: { "X-Admin-Key": adminKey },
   });
 }
