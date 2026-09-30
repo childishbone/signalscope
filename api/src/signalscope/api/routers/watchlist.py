@@ -10,6 +10,8 @@ from signalscope.db.models import Security, WatchlistItem
 from signalscope.db.session import get_db
 from signalscope.market_data.yahoo import YahooProvider
 from signalscope.services.bars import compute_snapshot, refresh_bars
+from signalscope.services.signal_history import record_signals
+from signalscope.services.signals import compute_signals_for_security
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
 
@@ -83,12 +85,23 @@ def add_to_watchlist(
     dependencies=[Depends(require_admin)],
 )
 def refresh_watchlist_item(item_id: int, db: Session = Depends(get_db)) -> dict[str, int]:
-    """Manual trigger for now; Phase 12 replaces this with a scheduled job."""
+    """Manual trigger for now; a later phase replaces this with a scheduled job.
+
+    Refreshes stored price bars, then recomputes and persists this
+    security's signals so signal history and change detection stay current.
+    """
     item = db.get(WatchlistItem, item_id)
     if item is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Watchlist item not found")
+
     bars_written = refresh_bars(db, item.security, _provider)
-    return {"bars_written": bars_written}
+
+    signal_changes = 0
+    signals = compute_signals_for_security(db, item.security_id)
+    if signals is not None:
+        signal_changes = len(record_signals(db, item.security_id, signals))
+
+    return {"bars_written": bars_written, "signal_changes": signal_changes}
 
 
 @router.delete(

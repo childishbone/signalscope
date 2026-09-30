@@ -1,6 +1,7 @@
 """Computing technical-analysis signals for a security from its stored bars."""
 
 from dataclasses import dataclass
+from datetime import date
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -30,7 +31,7 @@ MINIMUM_BARS_REQUIRED = max(
 @dataclass(frozen=True)
 class SecuritySignals:
     """All five computed signals for one security, plus how many stored
-    bars were used to compute them."""
+    bars were used to compute them and the trading day they're as of."""
 
     dma: IndicatorResult
     rsi: IndicatorResult
@@ -38,6 +39,7 @@ class SecuritySignals:
     elliott: IndicatorResult
     overall: IndicatorResult
     bars_used: int
+    as_of_date: date
 
 
 def compute_signals_for_security(db: Session, security_id: int) -> SecuritySignals | None:
@@ -73,4 +75,5 @@ def compute_signals_for_security(db: Session, security_id: int) -> SecuritySigna
         elliott=elliott,
         overall=overall,
         bars_used=len(bars),
+        as_of_date=bars[-1].trade_date,
     )
