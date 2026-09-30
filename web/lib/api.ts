@@ -59,6 +59,16 @@ export interface ApiSecuritySignals {
   overall: ApiIndicatorResult;
 }
 
+export interface ApiSignalEvent {
+  id: number;
+  security: ApiSecurity;
+  indicator: string;
+  from_state: SignalState;
+  to_state: SignalState;
+  as_of_date: string;
+  created_at: string;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -111,15 +121,23 @@ export function removeFromWatchlist(
 export function refreshWatchlistItem(
   itemId: number,
   adminKey: string,
-): Promise<{ bars_written: number }> {
-  return request<{ bars_written: number }>(`/api/watchlist/${itemId}/refresh`, {
-    method: "POST",
-    headers: { "X-Admin-Key": adminKey },
-  });
+): Promise<{ bars_written: number; signal_changes: number }> {
+  return request<{ bars_written: number; signal_changes: number }>(
+    `/api/watchlist/${itemId}/refresh`,
+    {
+      method: "POST",
+      headers: { "X-Admin-Key": adminKey },
+    },
+  );
 }
 
 export function getSecuritySignals(
   securityId: number,
 ): Promise<ApiSecuritySignals> {
   return request<ApiSecuritySignals>(`/api/securities/${securityId}/signals`);
+}
+
+export function getRecentSignalEvents(limit = 20): Promise<ApiSignalEvent[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return request<ApiSignalEvent[]>(`/api/signal-events?${params}`);
 }

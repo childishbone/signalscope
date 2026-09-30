@@ -1,15 +1,20 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";
+import { SignalBadge } from "@/components/signal-badge";
 import {
   ApiError,
+  type ApiSignalEvent,
   type ApiWatchlistItem,
+  getRecentSignalEvents,
   getSecuritySignals,
   getWatchlist,
 } from "@/lib/api";
+import { SIGNAL_LABELS } from "@/lib/constants";
 import type { SignalState } from "@/lib/types";
 
 const TONE: Record<SignalState, string> = {
@@ -27,6 +32,12 @@ export default function DashboardPage() {
   >({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [signalEvents, setSignalEvents] = useState<ApiSignalEvent[]>([]);
+  const [signalEventsLoading, setSignalEventsLoading] = useState(true);
+  const [signalEventsError, setSignalEventsError] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +82,27 @@ export default function DashboardPage() {
     }
 
     void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSignalEvents() {
+      try {
+        const events = await getRecentSignalEvents(10);
+        if (!cancelled) setSignalEvents(events);
+      } catch {
+        if (!cancelled)
+          setSignalEventsError("Could not load recent signal changes.");
+      } finally {
+        if (!cancelled) setSignalEventsLoading(false);
+      }
+    }
+
+    void loadSignalEvents();
     return () => {
       cancelled = true;
     };
@@ -151,11 +183,49 @@ export default function DashboardPage() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Panel title="Recent Signal Changes">
-          <p className="px-4 py-6 text-sm text-muted">
-            Signal history isn&apos;t tracked yet, so changes over time
-            can&apos;t be shown here. This arrives in a later phase once signals
-            are persisted daily.
-          </p>
+          {signalEventsLoading ? (
+            <p className="px-4 py-6 text-sm text-muted">Loading…</p>
+          ) : signalEventsError ? (
+            <p className="px-4 py-6 text-sm text-signal-bearish">
+              {signalEventsError}
+            </p>
+          ) : signalEvents.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-muted">
+              No signal changes recorded yet. Changes appear here once a
+              security&apos;s signal differs from what was last recorded --
+              click &quot;Refresh data&quot; on the Watchlist page to check for
+              updates.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {signalEvents.map((event) => (
+                <li
+                  key={event.id}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
+                >
+                  <span className="w-14 font-mono text-sm font-medium">
+                    {event.security.symbol}
+                  </span>
+                  <span className="w-24 text-sm text-muted">
+                    {SIGNAL_LABELS[
+                      event.indicator as keyof typeof SIGNAL_LABELS
+                    ] ?? event.indicator}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <SignalBadge state={event.from_state} />
+                    <ArrowRight
+                      className="h-3.5 w-3.5 text-muted"
+                      aria-hidden
+                    />
+                    <SignalBadge state={event.to_state} />
+                  </span>
+                  <span className="ml-auto font-mono text-xs text-muted">
+                    {event.as_of_date}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
 
         <Panel title="Recent Alerts">
