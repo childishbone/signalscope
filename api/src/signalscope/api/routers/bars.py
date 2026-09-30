@@ -11,7 +11,7 @@ from signalscope.db.session import get_db
 router = APIRouter(prefix="/api/securities", tags=["bars"])
 
 DEFAULT_LIMIT = 180
-MAX_LIMIT = 500
+MAX_LIMIT = 600  # covers a full ~2y of trading days, the most history we store
 
 
 @router.get("/{security_id}/bars", response_model=list[DailyBarOut])

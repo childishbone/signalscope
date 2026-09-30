@@ -42,6 +42,23 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+interface ChartRange {
+  label: string;
+  limit: number;
+}
+
+// Approximate trading-day counts. The backend only ever stores ~2 years of
+// history per security (see services/bars.py), so "All" tops out there too.
+const CHART_RANGES: ChartRange[] = [
+  { label: "1M", limit: 22 },
+  { label: "3M", limit: 66 },
+  { label: "6M", limit: 130 },
+  { label: "1Y", limit: 252 },
+  { label: "2Y", limit: 504 },
+  { label: "All", limit: 600 },
+];
+const DEFAULT_RANGE_LABEL = "6M";
+
 export default function WatchlistPage() {
   const { ensureAdminKey } = useAdminKey();
 
@@ -60,6 +77,7 @@ export default function WatchlistPage() {
   const [bars, setBars] = useState<ApiBar[]>([]);
   const [barsLoading, setBarsLoading] = useState(false);
   const [barsError, setBarsError] = useState<string | null>(null);
+  const [rangeLabel, setRangeLabel] = useState(DEFAULT_RANGE_LABEL);
 
   const refreshWatchlist = useCallback(async () => {
     try {
@@ -109,8 +127,16 @@ export default function WatchlistPage() {
     return () => clearTimeout(timeout);
   }, [query]);
 
+  const selectedItem = watchlist.find((w) => w.id === selectedId);
+  const selected = selectedItem?.security;
+  const quote = selectedItem?.quote;
+  const selectedSecurityId = selectedItem?.security.id ?? null;
+  const rangeLimit =
+    CHART_RANGES.find((r) => r.label === rangeLabel)?.limit ??
+    CHART_RANGES[2].limit;
+
   useEffect(() => {
-    if (selectedId === null) {
+    if (selectedSecurityId === null) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setBars([]);
       setBarsError(null);
@@ -121,7 +147,7 @@ export default function WatchlistPage() {
     setBarsLoading(true);
     setBarsError(null);
 
-    getSecurityBars(selectedId)
+    getSecurityBars(selectedSecurityId, rangeLimit)
       .then((data) => {
         if (cancelled) return;
         setBars(data);
@@ -141,7 +167,7 @@ export default function WatchlistPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [selectedSecurityId, rangeLimit]);
 
   async function handleAdd(match: ApiSecurityMatch) {
     const key = ensureAdminKey();
@@ -175,7 +201,7 @@ export default function WatchlistPage() {
     }
   }
 
-  async function handleRefreshData(itemId: number) {
+  async function handleRefreshData(itemId: number, securityId: number) {
     const key = ensureAdminKey();
     if (!key) return;
     setActionError(null);
@@ -183,8 +209,8 @@ export default function WatchlistPage() {
     try {
       await refreshWatchlistItem(itemId, key);
       await refreshWatchlist();
-      if (itemId === selectedId) {
-        const data = await getSecurityBars(itemId);
+      if (securityId === selectedSecurityId) {
+        const data = await getSecurityBars(securityId, rangeLimit);
         setBars(data);
       }
     } catch (err) {
@@ -195,10 +221,6 @@ export default function WatchlistPage() {
       setRefreshing(false);
     }
   }
-
-  const selectedItem = watchlist.find((w) => w.id === selectedId);
-  const selected = selectedItem?.security;
-  const quote = selectedItem?.quote;
 
   return (
     <>
@@ -324,7 +346,7 @@ export default function WatchlistPage() {
         </Panel>
 
         <Panel>
-          {selected ? (
+          {selected && selectedItem ? (
             <div className="p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
@@ -337,7 +359,7 @@ export default function WatchlistPage() {
                 <button
                   type="button"
                   onClick={() =>
-                    selectedItem && handleRefreshData(selectedItem.id)
+                    handleRefreshData(selectedItem.id, selected.id)
                   }
                   disabled={refreshing}
                   className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted hover:bg-panel-hover disabled:opacity-50"
@@ -398,7 +420,25 @@ export default function WatchlistPage() {
                 </div>
               )}
 
-              <div className="mt-4">
+              <div className="mt-4 flex items-center justify-end gap-1">
+                {CHART_RANGES.map((range) => (
+                  <button
+                    key={range.label}
+                    type="button"
+                    onClick={() => setRangeLabel(range.label)}
+                    aria-pressed={rangeLabel === range.label}
+                    className={`rounded-md px-2 py-1 text-xs transition-colors ${
+                      rangeLabel === range.label
+                        ? "bg-panel-hover text-foreground"
+                        : "text-muted hover:bg-panel-hover"
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-2">
                 {barsLoading ? (
                   <div className="flex h-56 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted">
                     <Loader2
