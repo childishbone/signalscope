@@ -83,7 +83,7 @@ class IndicatorSignal(Base):
         ),
         CheckConstraint(f"state in {_STATES}", name="state"),
         CheckConstraint(f"indicator in {_INDICATORS}", name="indicator"),
-        CheckConstraint("score between -2 and 2", name="score_range"),
+        CheckConstraint("score between -4 and 4", name="score_range"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
