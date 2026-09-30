@@ -69,6 +69,15 @@ export interface ApiSignalEvent {
   created_at: string;
 }
 
+export interface ApiBar {
+  trade_date: string;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+  volume: number;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -140,4 +149,12 @@ export function getSecuritySignals(
 export function getRecentSignalEvents(limit = 20): Promise<ApiSignalEvent[]> {
   const params = new URLSearchParams({ limit: String(limit) });
   return request<ApiSignalEvent[]>(`/api/signal-events?${params}`);
+}
+
+export function getSecurityBars(
+  securityId: number,
+  limit = 180,
+): Promise<ApiBar[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return request<ApiBar[]>(`/api/securities/${securityId}/bars?${params}`);
 }

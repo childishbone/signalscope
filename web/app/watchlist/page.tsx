@@ -12,11 +12,14 @@ import { useCallback, useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";
+import { PriceChart } from "@/components/price-chart";
 import {
   addToWatchlist,
   ApiError,
+  type ApiBar,
   type ApiSecurityMatch,
   type ApiWatchlistItem,
+  getSecurityBars,
   getWatchlist,
   refreshWatchlistItem,
   removeFromWatchlist,
@@ -53,6 +56,10 @@ export default function WatchlistPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const [bars, setBars] = useState<ApiBar[]>([]);
+  const [barsLoading, setBarsLoading] = useState(false);
+  const [barsError, setBarsError] = useState<string | null>(null);
 
   const refreshWatchlist = useCallback(async () => {
     try {
@@ -102,6 +109,40 @@ export default function WatchlistPage() {
     return () => clearTimeout(timeout);
   }, [query]);
 
+  useEffect(() => {
+    if (selectedId === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBars([]);
+      setBarsError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setBarsLoading(true);
+    setBarsError(null);
+
+    getSecurityBars(selectedId)
+      .then((data) => {
+        if (cancelled) return;
+        setBars(data);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setBars([]);
+        setBarsError(
+          err instanceof Error ? err.message : "Failed to load price history",
+        );
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setBarsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
   async function handleAdd(match: ApiSecurityMatch) {
     const key = ensureAdminKey();
     if (!key) return;
@@ -142,6 +183,10 @@ export default function WatchlistPage() {
     try {
       await refreshWatchlistItem(itemId, key);
       await refreshWatchlist();
+      if (itemId === selectedId) {
+        const data = await getSecurityBars(itemId);
+        setBars(data);
+      }
     } catch (err) {
       setActionError(
         err instanceof ApiError ? err.message : "Failed to refresh data",
@@ -353,8 +398,29 @@ export default function WatchlistPage() {
                 </div>
               )}
 
-              <div className="mt-4 flex h-56 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted">
-                Price chart arrives in a later phase
+              <div className="mt-4">
+                {barsLoading ? (
+                  <div className="flex h-56 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted">
+                    <Loader2
+                      className="mr-2 h-4 w-4 animate-spin"
+                      aria-hidden
+                    />
+                    Loading chart…
+                  </div>
+                ) : barsError ? (
+                  <div className="flex h-56 items-center justify-center rounded-md border border-dashed border-border text-sm text-signal-bearish">
+                    {barsError}
+                  </div>
+                ) : bars.length === 0 ? (
+                  <div className="flex h-56 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted">
+                    No price history yet. Click &quot;Refresh data&quot; to
+                    fetch it.
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-border p-2">
+                    <PriceChart bars={bars} />
+                  </div>
+                )}
               </div>
             </div>
           ) : (
