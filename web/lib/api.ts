@@ -1,5 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+import type { SignalState } from "./types";
+
 export interface ApiSecurity {
   id: number;
   symbol: string;
@@ -38,6 +40,23 @@ export interface ApiSecurityMatch {
   country: string;
   currency: string;
   asset_type: string;
+}
+
+export interface ApiIndicatorResult {
+  state: SignalState;
+  score: number;
+  reasons: string[];
+  values: Record<string, number>;
+}
+
+export interface ApiSecuritySignals {
+  security: ApiSecurity;
+  bars_used: number;
+  dma: ApiIndicatorResult;
+  rsi: ApiIndicatorResult;
+  ichimoku: ApiIndicatorResult;
+  elliott: ApiIndicatorResult;
+  overall: ApiIndicatorResult;
 }
 
 export class ApiError extends Error {
@@ -97,4 +116,10 @@ export function refreshWatchlistItem(
     method: "POST",
     headers: { "X-Admin-Key": adminKey },
   });
+}
+
+export function getSecuritySignals(
+  securityId: number,
+): Promise<ApiSecuritySignals> {
+  return request<ApiSecuritySignals>(`/api/securities/${securityId}/signals`);
 }

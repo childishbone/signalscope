@@ -160,6 +160,7 @@ export default function WatchlistPage() {
       <PageHeader
         title="Watchlist"
         description="Search for securities and manage your list."
+        sampleData={false}
       />
 
       {loadError && (
