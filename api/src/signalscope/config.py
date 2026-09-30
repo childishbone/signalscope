@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     database_url: str = ""
     admin_api_key: str = ""
     allowed_origins: str = "http://localhost:3000"
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
 
 
 @lru_cache

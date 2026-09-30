@@ -1,5 +1,6 @@
 """Batch-refresh every watchlist security: pull fresh price bars,
-recompute signals, and persist any state changes.
+recompute signals, persist any state changes, and send a Telegram
+notification for each change.
 
 Runs on a schedule (see .github/workflows/scheduled-refresh.yml) so
 signal history builds up automatically; the Watchlist page's "Refresh
@@ -20,6 +21,7 @@ from signalscope.db.engine import get_engine
 from signalscope.db.models import IngestionRun, WatchlistItem
 from signalscope.market_data.yahoo import YahooProvider
 from signalscope.services.bars import refresh_bars
+from signalscope.services.notifications import notify_signal_event
 from signalscope.services.signal_history import record_signals
 from signalscope.services.signals import compute_signals_for_security
 
@@ -33,6 +35,7 @@ class RunSummary:
     securities_total: int
     securities_failed: int
     bars_upserted: int
+    notifications_sent: int
 
 
 def run(db: Session) -> RunSummary:
@@ -47,14 +50,29 @@ def run(db: Session) -> RunSummary:
 
     failures = 0
     bars_upserted = 0
+    notifications_sent = 0
     error_lines: list[str] = []
 
     for item in items:
         try:
             bars_upserted += refresh_bars(db, item.security, provider)
             signals = compute_signals_for_security(db, item.security_id)
-            if signals is not None:
-                record_signals(db, item.security_id, signals)
+            if signals is None:
+                continue
+
+            changes = record_signals(db, item.security_id, signals)
+            for change in changes:
+                notification = notify_signal_event(
+                    db,
+                    event_id=change.event_id,
+                    security_symbol=item.security.symbol,
+                    indicator=change.indicator,
+                    from_state=change.from_state.value,
+                    to_state=change.to_state.value,
+                    as_of_date=signals.as_of_date,
+                )
+                if notification.status == "sent":
+                    notifications_sent += 1
         except Exception as exc:
             # One bad security (e.g. a temporary Yahoo hiccup) must not
             # abort the whole batch, and the failed transaction must be
@@ -83,6 +101,7 @@ def run(db: Session) -> RunSummary:
         securities_total=len(items),
         securities_failed=failures,
         bars_upserted=bars_upserted,
+        notifications_sent=notifications_sent,
     )
 
 
@@ -94,7 +113,8 @@ def main() -> None:
         f"[refresh_watchlist] status={summary.status} "
         f"securities_total={summary.securities_total} "
         f"securities_failed={summary.securities_failed} "
-        f"bars_upserted={summary.bars_upserted}"
+        f"bars_upserted={summary.bars_upserted} "
+        f"notifications_sent={summary.notifications_sent}"
     )
     if summary.status == "failed":
         sys.exit(1)

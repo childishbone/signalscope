@@ -2,11 +2,11 @@
 state changes from what was last recorded.
 
 This is what turns the on-the-fly signals from `services.signals` into a
-history: every time signals are (re)computed for a security -- currently
-only from the watchlist's manual "Refresh data" action -- this module
-writes one `indicator_signals` row per indicator for that trading day, and
-if an indicator's state differs from the most recently recorded prior day,
-it also writes a `signal_events` row.
+history: every time signals are (re)computed for a security -- from the
+watchlist's manual "Refresh data" action, or the scheduled batch refresh
+-- this module writes one `indicator_signals` row per indicator for that
+trading day, and if an indicator's state differs from the most recently
+recorded prior day, it also writes a `signal_events` row.
 """
 
 from dataclasses import dataclass
@@ -31,6 +31,7 @@ class SignalChange:
     """One indicator's recorded state differs from what was last stored
     for that security, as of a newly-computed trading day."""
 
+    event_id: int
     indicator: str
     from_state: SignalState
     to_state: SignalState
@@ -121,7 +122,9 @@ def _record_event_if_changed(
     inserted = db.execute(returning_stmt).first()
     if inserted is None:
         return None
-    return SignalChange(indicator=indicator, from_state=previous, to_state=current)
+    return SignalChange(
+        event_id=inserted.id, indicator=indicator, from_state=previous, to_state=current
+    )
 
 
 def record_signals(db: Session, security_id: int, signals: SecuritySignals) -> list[SignalChange]:
