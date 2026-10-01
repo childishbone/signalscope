@@ -13,7 +13,7 @@ export function useAdminKey() {
   const ensureAdminKey = useCallback((): string | null => {
     if (adminKey) return adminKey;
     const entered = window.prompt(
-      "Enter the admin key to modify the watchlist:",
+      "Enter the password to modify the watchlist:",
     );
     if (!entered) return null;
     setAdminKey(entered);
