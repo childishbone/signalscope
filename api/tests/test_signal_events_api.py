@@ -60,12 +60,16 @@ def test_signal_events_endpoint_returns_recent_changes(db_session: Session) -> N
 
     client = _client_using(db_session)
     try:
-        response = client.get("/api/signal-events")
+        # Query a generous limit rather than the default: this database also
+        # holds real production signal events (from the scheduled batch job),
+        # so we can't assume our one new event is the *only* row returned --
+        # only that it's present. Filtering by symbol isolates it from the rest.
+        response = client.get("/api/signal-events?limit=50")
         assert response.status_code == 200
         body = response.json()
-        assert len(body) == 1
-        event = body[0]
-        assert event["security"]["symbol"] == "AAA"
+        aaa_events = [e for e in body if e["security"]["symbol"] == "AAA"]
+        assert len(aaa_events) == 1
+        event = aaa_events[0]
         assert event["indicator"] == "dma"
         assert event["from_state"] == "neutral"
         assert event["to_state"] == "bullish"
