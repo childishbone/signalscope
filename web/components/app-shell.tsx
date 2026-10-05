@@ -1,11 +1,16 @@
 "use client";
 
-import { Activity, LayoutDashboard, ListChecks, Menu, Table2, X } from "lucide-react";
+import {
+  Activity,
+  LayoutDashboard,
+  ListChecks,
+  Menu,
+  Table2,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
-import { DISCLAIMER } from "@/lib/constants";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -17,7 +22,9 @@ function Brand() {
   return (
     <div className="flex items-center gap-2 px-4 py-4">
       <Activity className="h-5 w-5 text-accent" aria-hidden />
-      <span className="text-base font-semibold tracking-tight">SignalScope</span>
+      <span className="text-base font-semibold tracking-tight">
+        SignalScope
+      </span>
     </div>
   );
 }
@@ -27,7 +34,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1 p-3" aria-label="Main">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-        const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+        const active =
+          href === "/" ? pathname === "/" : pathname.startsWith(href);
         return (
           <Link
             key={href}
@@ -70,17 +78,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setMenuOpen((open) => !open)}
               className="rounded-md p-2 text-muted hover:bg-panel-hover hover:text-foreground"
             >
-              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {menuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </button>
           </div>
           {menuOpen && <NavLinks onNavigate={() => setMenuOpen(false)} />}
         </header>
 
-        <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">{children}</main>
-
-        <footer className="border-t border-border px-4 py-3 text-xs text-muted sm:px-6">
-          {DISCLAIMER}
-        </footer>
+        <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

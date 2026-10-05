@@ -66,6 +66,7 @@ def run(db: Session) -> RunSummary:
                     db,
                     event_id=change.event_id,
                     security_symbol=item.security.symbol,
+                    security_name=item.security.name,
                     indicator=change.indicator,
                     from_state=change.from_state.value,
                     to_state=change.to_state.value,

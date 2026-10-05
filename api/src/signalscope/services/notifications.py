@@ -29,13 +29,14 @@ DISCLAIMER = (
 
 def format_message(
     security_symbol: str,
+    security_name: str,
     indicator: str,
     from_state: str,
     to_state: str,
     as_of_date: object,
 ) -> str:
     return (
-        f"SignalScope: {security_symbol}\n"
+        f"SignalScope: {security_name} ({security_symbol})\n"
         f"{indicator.upper()} changed {from_state} -> {to_state} (as of {as_of_date})\n\n"
         f"{DISCLAIMER}"
     )
@@ -63,6 +64,7 @@ def notify_signal_event(
     *,
     event_id: int,
     security_symbol: str,
+    security_name: str,
     indicator: str,
     from_state: str,
     to_state: str,
@@ -72,7 +74,9 @@ def notify_signal_event(
     the attempt. Safe to call more than once for the same event: the
     unique (signal_event_id, channel) row is reused rather than
     duplicated, so a retry just updates the existing record."""
-    message = format_message(security_symbol, indicator, from_state, to_state, as_of_date)
+    message = format_message(
+        security_symbol, security_name, indicator, from_state, to_state, as_of_date
+    )
 
     notification = db.scalar(
         select(Notification).where(
