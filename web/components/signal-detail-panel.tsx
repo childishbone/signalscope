@@ -58,11 +58,6 @@ export function SignalDetailPanel({
             </li>
           ))}
         </ul>
-
-        <p className="mt-4 text-xs text-muted">
-          Technical signals are generated algorithmically for informational
-          purposes and do not constitute investment advice.
-        </p>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import {
   Activity,
+  ClipboardCheck,
   LayoutDashboard,
   ListChecks,
   Menu,
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/watchlist", label: "Watchlist", icon: ListChecks },
   { href: "/technical-analysis", label: "Technical Analysis", icon: Table2 },
+  { href: "/canslim", label: "CANSLIM", icon: ClipboardCheck },
 ] as const;
 
 function Brand() {

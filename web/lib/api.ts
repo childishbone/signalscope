@@ -1,6 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-import type { SignalState } from "./types";
+import type { CanslimVerdict, SignalState } from "./types";
 
 export interface ApiSecurity {
   id: number;
@@ -76,6 +76,29 @@ export interface ApiBar {
   low: string;
   close: string;
   volume: number;
+}
+
+export interface ApiCanslimConstituent {
+  symbol: string;
+  name: string;
+  weight_pct: number;
+  verdict: CanslimVerdict;
+}
+
+export interface ApiCanslimLetterResult {
+  letter: string;
+  verdict: CanslimVerdict;
+  reasons: string[];
+  values: Record<string, number>;
+  constituents: ApiCanslimConstituent[] | null;
+}
+
+export interface ApiSecurityCanslim {
+  security: ApiSecurity;
+  letters: Record<string, ApiCanslimLetterResult>;
+  score_pct: number | null;
+  criteria_evaluated: number;
+  criteria_total: number;
 }
 
 export class ApiError extends Error {
@@ -157,4 +180,8 @@ export function getSecurityBars(
 ): Promise<ApiBar[]> {
   const params = new URLSearchParams({ limit: String(limit) });
   return request<ApiBar[]>(`/api/securities/${securityId}/bars?${params}`);
+}
+
+export function getCanslimWatchlist(): Promise<ApiSecurityCanslim[]> {
+  return request<ApiSecurityCanslim[]>("/api/canslim");
 }

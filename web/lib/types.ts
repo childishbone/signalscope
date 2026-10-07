@@ -2,6 +2,9 @@ export type SignalState = "bullish" | "neutral" | "bearish";
 export type IndicatorKey = "dma" | "rsi" | "ichimoku" | "elliott";
 export type SignalKey = IndicatorKey | "overall";
 
+export type CanslimVerdict = "pass" | "fail" | "insufficient_data";
+export type CanslimLetter = "C" | "A" | "N" | "S" | "L" | "M";
+
 export interface Security {
   ticker: string;
   name: string;
