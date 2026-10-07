@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from signalscope.db.models import DailyBar, Security
 from signalscope.market_data.base import MarketDataProvider
+from signalscope.market_data.benchmarks import get_benchmark_symbol
 from signalscope.market_data.types import EarningsHistory, FundHolding
 from signalscope.signals.canslim_earnings import (
     score_annual_earnings_growth,
@@ -50,6 +51,32 @@ class CanslimResult:
     score_pct: float | None  # None if nothing at all could be evaluated
     criteria_evaluated: int
     criteria_total: int
+
+
+class BenchmarkCache:
+    """Fetches each market's benchmark index closes at most once, however
+    many securities in that market ask for it.
+
+    A single instance is meant to live for the lifetime of one request
+    that computes CANSLIM for several securities (e.g. a whole watchlist)
+    -- a fresh instance per request keeps results from leaking between
+    unrelated requests.
+    """
+
+    def __init__(self, provider: MarketDataProvider) -> None:
+        self._provider = provider
+        self._cache: dict[str, list[float]] = {}
+
+    def closes_for_country(self, country: str) -> tuple[list[float], str | None]:
+        """The benchmark index's closes for a market, and its symbol, or
+        ([], None) if this app has no configured benchmark for it."""
+        symbol = get_benchmark_symbol(country)
+        if symbol is None:
+            return [], None
+        if country not in self._cache:
+            bars = self._provider.get_historical_bars(symbol, period="2y")
+            self._cache[country] = [float(bar.close) for bar in bars]
+        return self._cache[country], symbol
 
 
 def _load_closes_and_volumes(db: Session, security_id: int) -> tuple[list[float], list[int]]:
@@ -164,11 +191,12 @@ def compute_canslim_for_security(
     """Compute all six CANSLIM letters for one security.
 
     `benchmark_closes`/`benchmark_symbol` are passed in rather than
-    fetched here, so a caller computing this for an entire watchlist can
-    fetch each market's benchmark index once and reuse it across every
-    security in that market. `benchmark_symbol=None` means this security's
-    market has no configured benchmark -- M and L resolve to Insufficient
-    Data rather than erroring.
+    fetched here -- a caller computing this for an entire watchlist
+    should use a single BenchmarkCache and pass its result in, so each
+    market's benchmark index is fetched once and reused across every
+    security in that market. `benchmark_symbol=None` means this
+    security's market has no configured benchmark -- M and L resolve to
+    Insufficient Data rather than erroring.
     """
     closes, volumes = _load_closes_and_volumes(db, security.id)
 
