@@ -30,3 +30,32 @@ class Bar:
     close: Decimal
     adj_close: Decimal | None
     volume: int
+
+
+@dataclass(frozen=True)
+class EpsPeriod:
+    """One reported diluted (or basic, if diluted wasn't available) EPS
+    figure for one fiscal period, as reported by the provider -- not every
+    period a security has existed for necessarily has one."""
+
+    period_end: date
+    eps: float
+
+
+@dataclass(frozen=True)
+class EarningsHistory:
+    """A security's EPS history, oldest first in each list. Either list
+    may be shorter than hoped (or empty) -- CANSLIM letters C and A treat
+    that as insufficient data, not a failure."""
+
+    quarterly_eps: list[EpsPeriod]
+    annual_eps: list[EpsPeriod]
+
+
+@dataclass(frozen=True)
+class FundHolding:
+    """One constituent of an ETF/fund's reported top holdings."""
+
+    symbol: str
+    name: str
+    weight_pct: float  # e.g. 31.3 for a 31.3% weighting

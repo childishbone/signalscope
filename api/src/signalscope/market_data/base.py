@@ -7,7 +7,7 @@ here, not touching the callers.
 
 from abc import ABC, abstractmethod
 
-from signalscope.market_data.types import Bar, SecurityMatch
+from signalscope.market_data.types import Bar, EarningsHistory, FundHolding, SecurityMatch
 
 
 class MarketDataProvider(ABC):
@@ -18,3 +18,16 @@ class MarketDataProvider(ABC):
     @abstractmethod
     def get_historical_bars(self, provider_symbol: str, period: str = "2y") -> list[Bar]:
         """Daily OHLCV bars, oldest first. Incomplete bars are excluded."""
+
+    @abstractmethod
+    def get_earnings_history(self, provider_symbol: str) -> EarningsHistory:
+        """Quarterly and annual EPS history, oldest first. Empty lists if
+        the provider has none (common for ETFs, and for thinner-coverage
+        non-US tickers)."""
+
+    @abstractmethod
+    def get_top_holdings(self, provider_symbol: str, limit: int = 10) -> list[FundHolding]:
+        """An ETF/fund's largest constituent holdings, by weight,
+        descending. Empty for a plain equity, or for a fund whose
+        holdings aren't individual companies (e.g. a derivative-based
+        leveraged fund)."""

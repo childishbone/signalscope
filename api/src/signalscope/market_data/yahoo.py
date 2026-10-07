@@ -6,6 +6,9 @@ Known limitations (see Phase 0 spike and README "Limitations" section):
 - The most recent daily bar can arrive with a missing close for a day or
   more after the session ends (observed on some ETFs); such bars are
   dropped by _bars_from_dataframe rather than passed on as-is.
+- Earnings and fund-holdings data is noticeably thinner for non-US
+  tickers, and some leveraged/derivative-based funds report a single
+  "holding" that is itself another fund rather than a real company.
 """
 
 from datetime import date
@@ -21,9 +24,16 @@ from signalscope.market_data.exchanges import (
     is_supported_exchange,
     to_native_symbol,
 )
-from signalscope.market_data.types import Bar, SecurityMatch
+from signalscope.market_data.types import (
+    Bar,
+    EarningsHistory,
+    EpsPeriod,
+    FundHolding,
+    SecurityMatch,
+)
 
 _SUPPORTED_QUOTE_TYPES = {"EQUITY", "ETF"}
+_EPS_ROW_CANDIDATES = ("Diluted EPS", "Basic EPS")
 
 
 def _to_decimal(value: float) -> Decimal:
@@ -87,6 +97,44 @@ def _bars_from_dataframe(df: pd.DataFrame) -> list[Bar]:
     return bars
 
 
+def _eps_periods_from_dataframe(df: pd.DataFrame | None) -> list[EpsPeriod]:
+    """Pull whichever EPS row is present (preferring Diluted EPS), oldest
+    first, skipping periods where the figure wasn't reported at all."""
+    if df is None or df.empty:
+        return []
+
+    eps_row_name = next((name for name in _EPS_ROW_CANDIDATES if name in df.index), None)
+    if eps_row_name is None:
+        return []
+
+    periods: list[EpsPeriod] = []
+    for period_end, value in df.loc[eps_row_name].items():
+        if pd.isna(value):
+            continue
+        periods.append(EpsPeriod(period_end=_extract_trade_date(period_end), eps=float(value)))
+
+    periods.sort(key=lambda period: period.period_end)  # yfinance's columns are newest-first
+    return periods
+
+
+def _holdings_from_dataframe(df: pd.DataFrame | None, limit: int) -> list[FundHolding]:
+    if df is None or df.empty:
+        return []
+
+    holdings: list[FundHolding] = []
+    for symbol, row in df.iterrows():
+        holdings.append(
+            FundHolding(
+                symbol=str(symbol),
+                name=str(row.get("Name", "")),
+                weight_pct=round(float(row.get("Holding Percent", 0.0)) * 100, 4),
+            )
+        )
+        if len(holdings) >= limit:
+            break
+    return holdings
+
+
 class YahooProvider(MarketDataProvider):
     def search_securities(self, query: str, limit: int = 8) -> list[SecurityMatch]:
         quotes = yf.Search(query, max_results=max(limit, 10)).quotes
@@ -112,3 +160,18 @@ class YahooProvider(MarketDataProvider):
         if df.empty:
             return []
         return _bars_from_dataframe(df)
+
+    def get_earnings_history(self, provider_symbol: str) -> EarningsHistory:
+        ticker = yf.Ticker(provider_symbol)
+        quarterly = _eps_periods_from_dataframe(ticker.quarterly_income_stmt)
+        annual = _eps_periods_from_dataframe(ticker.income_stmt)
+        return EarningsHistory(quarterly_eps=quarterly, annual_eps=annual)
+
+    def get_top_holdings(self, provider_symbol: str, limit: int = 10) -> list[FundHolding]:
+        try:
+            top_holdings = yf.Ticker(provider_symbol).get_funds_data().top_holdings
+        except Exception:
+            # Not a fund, or yfinance has no holdings data for it -- both are
+            # normal, expected outcomes here, not errors worth surfacing.
+            return []
+        return _holdings_from_dataframe(top_holdings, limit)
