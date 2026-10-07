@@ -11,6 +11,7 @@ Known limitations (see Phase 0 spike and README "Limitations" section):
   "holding" that is itself another fund rather than a real company.
 """
 
+import logging
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -31,6 +32,8 @@ from signalscope.market_data.types import (
     FundHolding,
     SecurityMatch,
 )
+
+logger = logging.getLogger(__name__)
 
 _SUPPORTED_QUOTE_TYPES = {"EQUITY", "ETF"}
 _EPS_ROW_CANDIDATES = ("Diluted EPS", "Basic EPS")
@@ -170,8 +173,13 @@ class YahooProvider(MarketDataProvider):
     def get_top_holdings(self, provider_symbol: str, limit: int = 10) -> list[FundHolding]:
         try:
             top_holdings = yf.Ticker(provider_symbol).get_funds_data().top_holdings
-        except Exception:
-            # Not a fund, or yfinance has no holdings data for it -- both are
-            # normal, expected outcomes here, not errors worth surfacing.
+        except Exception as exc:
+            # Not a fund, or yfinance has no holdings data for it, are both
+            # normal, expected outcomes here -- but so is Yahoo's holdings
+            # endpoint (quoteSummary/topHoldings) being rate-limited or
+            # blocked for this server's IP, which looks identical from here.
+            # Log the real exception rather than silently assuming the
+            # former, so production logs can tell the two apart.
+            logger.warning("get_top_holdings(%s) failed: %r", provider_symbol, exc)
             return []
         return _holdings_from_dataframe(top_holdings, limit)
