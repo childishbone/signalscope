@@ -21,11 +21,6 @@ from signalscope.db.models import Notification
 
 TELEGRAM_API_URL = "https://api.telegram.org/bot{token}/sendMessage"
 
-DISCLAIMER = (
-    "Technical signals are generated algorithmically for informational "
-    "purposes and do not constitute investment advice."
-)
-
 
 def format_message(
     security_symbol: str,
@@ -37,8 +32,7 @@ def format_message(
 ) -> str:
     return (
         f"SignalScope: {security_name} ({security_symbol})\n"
-        f"{indicator.upper()} changed {from_state} -> {to_state} (as of {as_of_date})\n\n"
-        f"{DISCLAIMER}"
+        f"{indicator.upper()} changed {from_state} -> {to_state} (as of {as_of_date})"
     )
 
 
