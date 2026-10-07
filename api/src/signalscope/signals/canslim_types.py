@@ -24,6 +24,18 @@ class CanslimVerdict(StrEnum):
 
 
 @dataclass(frozen=True)
+class CanslimConstituentResult:
+    """One constituent company's verdict, used only when a letter was
+    scored by aggregating across an ETF/fund's top holdings rather than
+    the fund itself (funds don't report their own EPS)."""
+
+    symbol: str
+    name: str
+    weight_pct: float
+    verdict: CanslimVerdict
+
+
+@dataclass(frozen=True)
 class CanslimLetterResult:
     """The output of scoring one CANSLIM letter for one security.
 
@@ -31,9 +43,15 @@ class CanslimLetterResult:
     elsewhere in this codebase, so the frontend can show the reasoning
     behind a Pass/Fail/Insufficient-data verdict the same way it already
     does for DMA/RSI/Ichimoku/Elliott.
+
+    `constituents` is populated only when this result came from
+    aggregating across a fund's top holdings (see services.canslim) --
+    it lets the UI show which companies were used, their weight in the
+    fund, and each one's individual verdict.
     """
 
     letter: str
     verdict: CanslimVerdict
     reasons: list[str] = field(default_factory=list)
     values: dict[str, float] = field(default_factory=dict)
+    constituents: list[CanslimConstituentResult] | None = None
