@@ -55,7 +55,7 @@ export default function CanslimPage() {
     <>
       <PageHeader
         title="CANSLIM"
-        description="William O'Neil's CANSLIM checklist, scored per security. Each letter is Pass, Fail, or Insufficient Data — insufficient-data letters are excluded from the score rather than counted against it."
+        description="William O'Neil's CANSLIM checklist, scored per security. Each letter is Pass, Fail, or Insufficient Data — insufficient-data letters are excluded from the score rather than counted against it. I (Institutional Sponsorship) isn't included here, since reliable institutional-ownership data isn't available through this app's data provider."
         sampleData={false}
       />
 
