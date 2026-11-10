@@ -13,6 +13,7 @@ import { bollingerBands, rollingHigh } from "@/lib/indicators";
 
 interface PriceChartProps {
   bars: ApiBar[];
+  high52?: number | null;
 }
 
 function toggleClass(active: boolean): string {
@@ -21,7 +22,7 @@ function toggleClass(active: boolean): string {
   }`;
 }
 
-export function PriceChart({ bars }: PriceChartProps) {
+export function PriceChart({ bars, high52 }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [showBands, setShowBands] = useState(false);
@@ -98,7 +99,7 @@ export function PriceChart({ bars }: PriceChartProps) {
           lastValueVisible: false,
           crosshairMarkerVisible: false,
         })
-        .setData(rollingHigh(dates, closes));
+        .setData(high52 && dates.length > 1 ? [{ time: dates[0], value: high52 }, { time: dates[dates.length - 1], value: high52 }] : rollingHigh(dates, closes));
     }
 
     chart.timeScale().fitContent();
@@ -114,7 +115,7 @@ export function PriceChart({ bars }: PriceChartProps) {
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, showBands, showHigh]);
+  }, [bars, high52, showBands, showHigh]);
 
   return (
     <div>

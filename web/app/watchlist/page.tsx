@@ -458,7 +458,7 @@ export default function WatchlistPage() {
                   </div>
                 ) : (
                   <div className="rounded-md border border-border p-2">
-                    <PriceChart bars={bars} />
+                    <PriceChart bars={bars} high52={quote ? Number(quote.high_52w) : null} />
                   </div>
                 )}
               </div>
