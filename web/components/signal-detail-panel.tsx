@@ -4,10 +4,13 @@ import { X } from "lucide-react";
 
 import { SignalBadge } from "@/components/signal-badge";
 import type { ApiIndicatorResult } from "@/lib/api";
+import { BACKTEST_NOTE } from "@/lib/indicator-info";
+import type { IndicatorInfo } from "@/lib/indicator-info";
 
 interface SignalDetailPanelProps {
   tickerLabel: string;
   indicatorLabel: string;
+  info?: IndicatorInfo;
   result: ApiIndicatorResult;
   onClose: () => void;
 }
@@ -15,6 +18,7 @@ interface SignalDetailPanelProps {
 export function SignalDetailPanel({
   tickerLabel,
   indicatorLabel,
+  info,
   result,
   onClose,
 }: SignalDetailPanelProps) {
@@ -31,6 +35,7 @@ export function SignalDetailPanel({
           <div>
             <p className="text-xs text-muted">{tickerLabel}</p>
             <h2 className="text-lg font-semibold">{indicatorLabel}</h2>
+            {info && <p className="text-xs text-muted">{info.role} signal</p>}
           </div>
           <button
             onClick={onClose}
@@ -48,6 +53,8 @@ export function SignalDetailPanel({
           </span>
         </div>
 
+        {info && <p className="mb-4 text-sm text-muted">{info.meaning}</p>}
+
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
           Why this signal
         </p>
@@ -58,6 +65,18 @@ export function SignalDetailPanel({
             </li>
           ))}
         </ul>
+
+        {info && (
+          <>
+            <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-wide text-muted">
+              What history says
+            </p>
+            <p className="rounded-lg bg-panel-hover px-3 py-2 text-sm">
+              {info.history}
+            </p>
+            <p className="mt-2 text-xs text-muted">{BACKTEST_NOTE}</p>
+          </>
+        )}
       </div>
     </div>
   );

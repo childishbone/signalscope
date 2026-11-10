@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";
 import { SignalBadge, SignalLegend } from "@/components/signal-badge";
 import { SignalDetailPanel } from "@/components/signal-detail-panel";
+import { INDICATOR_INFO } from "@/lib/indicator-info";
 import { INDICATOR_ORDER, SIGNAL_LABELS } from "@/lib/constants";
 import {
   ApiError,
@@ -145,7 +146,7 @@ export default function TechnicalAnalysisPage() {
       />
 
       <div className="mb-4">
-        <SignalLegend />
+        <SignalLegend /><p className="mt-2 text-xs text-muted">Click any badge for details. Bollinger Bands is a contrarian signal: Bullish means price is stretched toward its lower band (a possible bounce), so it can disagree with the trend indicators.</p>
       </div>
 
       {listError && (
@@ -204,7 +205,7 @@ export default function TechnicalAnalysisPage() {
       {selected?.row[selected.key] && (
         <SignalDetailPanel
           tickerLabel={`${selected.row.security.symbol} — ${selected.row.security.name}`}
-          indicatorLabel={SIGNAL_LABELS[selected.key]}
+          indicatorLabel={SIGNAL_LABELS[selected.key]} info={INDICATOR_INFO[selected.key]}
           result={selected.row[selected.key]!}
           onClose={() => setSelected(null)}
         />
