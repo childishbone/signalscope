@@ -12,7 +12,7 @@ export const SIGNAL_LABELS: Record<SignalKey, string> = {
   rsi: "RSI",
   ichimoku: "Ichimoku",
   bollinger: "Bollinger Bands",
-  overall: "Trend",
+  overall: "Overall Trend",
 };
 
 export const CANSLIM_LETTER_ORDER = ["C", "A", "N", "S", "L", "M"] as const;
