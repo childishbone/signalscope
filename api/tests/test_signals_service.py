@@ -63,3 +63,18 @@ def test_compute_signals_returns_none_with_insufficient_bars(db_session: Session
 def test_compute_signals_returns_none_for_unknown_security(db_session: Session) -> None:
     result = compute_signals_for_security(db_session, security_id=999_999)
     assert result is None
+
+
+def test_high52_is_included_when_there_is_a_full_year_of_bars(db_session: Session) -> None:
+    security_id = _insert_security_with_bars(db_session, num_bars=260)
+    result = compute_signals_for_security(db_session, security_id)
+    assert result is not None
+    assert result.high52 is not None
+    assert len(result.high52.reasons) > 0
+
+
+def test_high52_is_omitted_when_history_is_shorter_than_a_year(db_session: Session) -> None:
+    security_id = _insert_security_with_bars(db_session, num_bars=MINIMUM_BARS_REQUIRED)
+    result = compute_signals_for_security(db_session, security_id)
+    assert result is not None
+    assert result.high52 is None

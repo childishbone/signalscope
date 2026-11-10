@@ -21,3 +21,4 @@ class SecuritySignalsOut(BaseModel):
     ichimoku: IndicatorResultOut
     bollinger: IndicatorResultOut
     overall: IndicatorResultOut
+    high52: IndicatorResultOut | None = None

@@ -11,6 +11,8 @@ from signalscope.signals.bollinger import MINIMUM_CLOSES_REQUIRED as BOLLINGER_M
 from signalscope.signals.bollinger import score_bollinger
 from signalscope.signals.dma import MINIMUM_CLOSES_REQUIRED as DMA_MINIMUM_REQUIRED
 from signalscope.signals.dma import score_dma
+from signalscope.signals.high52 import MINIMUM_CLOSES_REQUIRED as HIGH52_MINIMUM_REQUIRED
+from signalscope.signals.high52 import score_high52
 from signalscope.signals.ichimoku import MINIMUM_BARS_REQUIRED as ICHIMOKU_MINIMUM_REQUIRED
 from signalscope.signals.ichimoku import score_ichimoku
 from signalscope.signals.overall import compute_overall
@@ -40,6 +42,7 @@ class SecuritySignals:
     overall: IndicatorResult
     bars_used: int
     as_of_date: date
+    high52: IndicatorResult | None = None
 
 
 def compute_signals_for_security(db: Session, security_id: int) -> SecuritySignals | None:
@@ -67,6 +70,8 @@ def compute_signals_for_security(db: Session, security_id: int) -> SecuritySigna
     ichimoku = score_ichimoku(highs, lows, closes)
     bollinger = score_bollinger(closes)
     overall = compute_overall(dma=dma, rsi=rsi, ichimoku=ichimoku)
+    # 52-week high needs a full year of bars; shorter histories simply omit it.
+    high52 = score_high52(closes) if len(closes) >= HIGH52_MINIMUM_REQUIRED else None
 
     return SecuritySignals(
         dma=dma,
@@ -76,4 +81,5 @@ def compute_signals_for_security(db: Session, security_id: int) -> SecuritySigna
         overall=overall,
         bars_used=len(bars),
         as_of_date=bars[-1].trade_date,
+        high52=high52,
     )

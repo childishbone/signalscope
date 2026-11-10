@@ -1,6 +1,6 @@
 export type SignalState = "bullish" | "neutral" | "bearish";
 export type IndicatorKey = "dma" | "rsi" | "ichimoku" | "bollinger";
-export type SignalKey = IndicatorKey | "overall";
+export type SignalKey = IndicatorKey | "overall" | "high52";
 
 export type CanslimVerdict = "pass" | "fail" | "insufficient_data";
 export type CanslimLetter = "C" | "A" | "N" | "S" | "L" | "M";

@@ -84,3 +84,13 @@ def test_signals_endpoint_unknown_security_returns_404(db_session: Session) -> N
         assert response.status_code == 404
     finally:
         app.dependency_overrides.pop(get_db, None)
+
+
+def test_signals_endpoint_includes_high52_with_a_full_year_of_bars(db_session: Session) -> None:
+    security_id = _insert_security_with_bars(db_session, num_bars=260)
+    client = _client_using(db_session)
+    try:
+        body = client.get(f"/api/securities/{security_id}/signals").json()
+        assert body["high52"]["state"] in ("bullish", "neutral", "bearish")
+    finally:
+        app.dependency_overrides.pop(get_db, None)

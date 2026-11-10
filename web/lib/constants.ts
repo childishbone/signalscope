@@ -11,7 +11,7 @@ export const SIGNAL_LABELS: Record<SignalKey, string> = {
   dma: "DMA",
   rsi: "RSI",
   ichimoku: "Ichimoku",
-  bollinger: "Bollinger Bands",
+  bollinger: "Bollinger Bands", high52: "52-Week High",
   overall: "Overall Trend",
 };
 

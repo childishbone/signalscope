@@ -26,6 +26,14 @@ Further views:
     often predict risk better than direction).
   * STABILITY -- bullish-minus-bearish before vs after a split date, to see
     whether any edge holds in both halves of the period.
+  * VERDICT -- fixed pass/fail tests (decided before looking at results):
+    a RETURN test (bullish beats bearish at 20d and 60d in both halves) and
+    a RISK test (bullish states dip less than bearish in both halves).
+    A pass makes an indicator a candidate, not a proven signal.
+
+Research candidates (52-week high, momentum, volatility) live in
+candidate_signals.py. Use --indicators to test only some, e.g.
+    --indicators High52,Momentum,Volatility,Bollinger
 
 Usage (from the `api` folder, with the virtual environment active):
     python scripts/backtest_signals.py AAPL MSFT D05.SI 0700.HK
@@ -44,6 +52,15 @@ from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+
+from candidate_signals import (  # noqa: I001
+    HIGH52_MINIMUM,
+    MOMENTUM_MINIMUM,
+    VOLATILITY_MINIMUM,
+    score_high52,
+    score_momentum,
+    score_volatility,
+)
 
 from signalscope.signals.bollinger import MINIMUM_CLOSES_REQUIRED as BOLLINGER_MIN
 from signalscope.signals.bollinger import score_bollinger
@@ -156,6 +173,18 @@ def _score_volume(s: PriceSeries, end: int) -> IndicatorResult:
     return score_volume(s.closes[:end], s.volumes[:end])
 
 
+def _score_high52(s: PriceSeries, end: int) -> IndicatorResult:
+    return score_high52(s.closes[:end])
+
+
+def _score_momentum(s: PriceSeries, end: int) -> IndicatorResult:
+    return score_momentum(s.closes[:end])
+
+
+def _score_volatility(s: PriceSeries, end: int) -> IndicatorResult:
+    return score_volatility(s.closes[:end])
+
+
 INDICATORS: dict[str, tuple[int, Callable[[PriceSeries, int], IndicatorResult]]] = {
     "DMA": (DMA_MIN, _score_dma),
     "RSI": (RSI_MIN, _score_rsi),
@@ -163,7 +192,15 @@ INDICATORS: dict[str, tuple[int, Callable[[PriceSeries, int], IndicatorResult]]]
     "MACD": (MACD_MIN, _score_macd),
     "Bollinger": (BOLLINGER_MIN, _score_bollinger),
     "Volume": (VOLUME_MIN, _score_volume),
+    "High52": (HIGH52_MINIMUM, _score_high52),
+    "Momentum": (MOMENTUM_MINIMUM, _score_momentum),
+    "Volatility": (VOLATILITY_MINIMUM, _score_volatility),
 }
+
+# Every indicator is judged on exactly the same days: from the day the
+# slowest indicator has enough history. Fixed here, before any --indicators
+# filtering, so results do not shift depending on which are selected.
+COMMON_START = max(minimum for minimum, _ in INDICATORS.values())
 
 
 def forward_returns(adj: list[float], t: int) -> dict[int, float | None]:
@@ -192,10 +229,10 @@ def walk_forward(series: PriceSeries) -> dict[str, list[Observation]]:
     """Score every indicator on every day using only data up to that day."""
     results: dict[str, list[Observation]] = {}
     n = len(series.closes)
-    for name, (minimum, scorer) in INDICATORS.items():
+    for name, (_, scorer) in INDICATORS.items():
         observations: list[Observation] = []
         previous: str | None = None
-        for t in range(minimum - 1, n):
+        for t in range(COMMON_START - 1, n):
             result = scorer(series, t + 1)  # bars 0..t inclusive
             state = result.state.value
             observations.append(
@@ -215,7 +252,7 @@ def walk_forward(series: PriceSeries) -> dict[str, list[Observation]]:
 
 def baseline(series: PriceSeries) -> list[Observation]:
     """Every day from the same warm-up point, regardless of any signal."""
-    start = max(m for m, _ in INDICATORS.values()) - 1
+    start = COMMON_START - 1
     return [
         Observation(
             date=series.dates[t],
@@ -370,6 +407,87 @@ def print_stability(
         print(line)
 
 
+def mean_dip(observations: list[Observation]) -> float:
+    dips = [o.dip for o in observations if o.dip is not None]
+    return statistics.fmean(dips) if dips else 0.0
+
+
+def print_risk_stability(
+    pooled: dict[str, list[Observation]],
+    pooled_baseline: list[Observation],
+    split: str,
+) -> None:
+    print(f"\nRISK STABILITY: average worst 20-day dip, before vs after {split}")
+    print("(gap = bullish dip minus bearish dip, in % points; positive = bullish")
+    print(" states dipped LESS than bearish ones. It should be positive in BOTH halves)")
+    header = (
+        f"{'':<30}| gap before | gap after  | bull before | bull after | bear before | bear after"
+    )
+    print(header)
+    print("-" * len(header))
+
+    def half(observations: list[Observation], before: bool) -> list[Observation]:
+        return [o for o in observations if (o.date < split) == before]
+
+    base_before = mean_dip(half(pooled_baseline, True))
+    base_after = mean_dip(half(pooled_baseline, False))
+    print(
+        f"{'baseline (all days)':<30}| {'':>10} | {'':>10} "
+        f"| {base_before:>+11.2f} | {base_after:>+10.2f} "
+        f"| {base_before:>+11.2f} | {base_after:>+10.2f}"
+    )
+    for name in INDICATORS:
+        cells: list[float] = []
+        for before in (True, False):
+            part = half(pooled[name], before)
+            cells.append(mean_dip([o for o in part if o.state == "bullish"]))
+            cells.append(mean_dip([o for o in part if o.state == "bearish"]))
+        bull_b, bear_b, bull_a, bear_a = cells
+        print(
+            f"{name:<30}| {bull_b - bear_b:>+10.2f} | {bull_a - bear_a:>+10.2f} "
+            f"| {bull_b:>+11.2f} | {bull_a:>+10.2f} | {bear_b:>+11.2f} | {bear_a:>+10.2f}"
+        )
+
+
+MIN_SAMPLE = 300
+
+
+def print_verdicts(pooled: dict[str, list[Observation]], split: str) -> None:
+    """Fixed pass/fail tests, decided before looking at any results."""
+    print("\nVERDICT (fixed rules, set before seeing results)")
+    print(f"  RETURN test: bullish minus bearish > 0 at 20d AND 60d, before AND after {split}")
+    print("  RISK test:   bullish states dip less than bearish, before AND after the split")
+    print(f"  Each side needs at least {MIN_SAMPLE} days in each half, else INSUFFICIENT.")
+    print("  A PASS only makes an indicator a CANDIDATE. With several indicators tested,")
+    print("  one can pass by luck, so a pass still needs a sanity check before shipping.")
+    header = f"{'':<30}| RETURN test    | RISK test"
+    print(header)
+    print("-" * len(header))
+
+    for name in INDICATORS:
+        enough = True
+        return_ok = True
+        risk_ok = True
+        for before in (True, False):
+            part = [o for o in pooled[name] if (o.date < split) == before]
+            bull = [o for o in part if o.state == "bullish"]
+            bear = [o for o in part if o.state == "bearish"]
+            if len(bull) < MIN_SAMPLE or len(bear) < MIN_SAMPLE:
+                enough = False
+            for h in (20, 60):
+                if mean_of(bull, h) - mean_of(bear, h) <= 0:
+                    return_ok = False
+            if mean_dip(bull) - mean_dip(bear) <= 0:
+                risk_ok = False
+        if not enough:
+            print(f"{name:<30}| INSUFFICIENT   | INSUFFICIENT")
+        else:
+            print(
+                f"{name:<30}| {'PASS' if return_ok else 'fail':<14} "
+                f"| {'PASS' if risk_ok else 'fail'}"
+            )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Signal-efficacy backtest")
     parser.add_argument("tickers", nargs="*", help="Yahoo tickers, e.g. AAPL D05.SI 0700.HK")
@@ -378,7 +496,23 @@ def main() -> None:
     parser.add_argument(
         "--split-date", default="2024-01-01", help="date splitting the stability check"
     )
+    parser.add_argument(
+        "--indicators",
+        help="comma-separated indicator names to test (default: all), "
+        "e.g. High52,Momentum,Volatility,Bollinger",
+    )
     args = parser.parse_args()
+
+    if args.indicators:
+        wanted = [name.strip() for name in args.indicators.split(",") if name.strip()]
+        unknown = [name for name in wanted if name not in INDICATORS]
+        if unknown:
+            parser.error(
+                f"unknown indicator(s): {', '.join(unknown)}; choose from {', '.join(INDICATORS)}"
+            )
+        for name in list(INDICATORS):
+            if name not in wanted:
+                del INDICATORS[name]
 
     tickers = list(args.tickers)
     if args.tickers_file:
@@ -399,8 +533,7 @@ def main() -> None:
         if series is None:
             print(f"  {symbol}: no data returned -- skipped")
             continue
-        warmup = max(m for m, _ in INDICATORS.values())
-        usable = len(series.closes) - warmup
+        usable = len(series.closes) - COMMON_START
         print(
             f"  {symbol}: {len(series.closes)} bars "
             f"({series.dates[0]} -> {series.dates[-1]}), {max(usable, 0)} scoreable days"
@@ -455,6 +588,8 @@ def main() -> None:
     print_risk_table("RISK: worst dip over the next 20 days", risk_rows)
 
     print_stability(pooled, pooled_baseline, args.split_date)
+    print_risk_stability(pooled, pooled_baseline, args.split_date)
+    print_verdicts(pooled, args.split_date)
 
     print(
         "\nHow to read: 'excess' = mean minus the baseline mean; 't' = excess measured in "

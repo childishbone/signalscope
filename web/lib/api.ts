@@ -57,6 +57,7 @@ export interface ApiSecuritySignals {
   ichimoku: ApiIndicatorResult;
   bollinger: ApiIndicatorResult;
   overall: ApiIndicatorResult;
+  high52?: ApiIndicatorResult | null;
 }
 
 export interface ApiSignalEvent {

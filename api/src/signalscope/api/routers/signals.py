@@ -44,4 +44,5 @@ def get_security_signals(security_id: int, db: Session = Depends(get_db)) -> Sec
         ichimoku=_to_indicator_out(signals.ichimoku),
         bollinger=_to_indicator_out(signals.bollinger),
         overall=_to_indicator_out(signals.overall),
+        high52=_to_indicator_out(signals.high52) if signals.high52 else None,
     )

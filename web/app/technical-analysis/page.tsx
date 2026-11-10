@@ -17,7 +17,7 @@ import {
 } from "@/lib/api";
 
 type CoreIndicatorKey = "dma" | "rsi" | "ichimoku" | "bollinger";
-type IndicatorKey = CoreIndicatorKey | "overall";
+type IndicatorKey = CoreIndicatorKey | "overall" | "high52";
 type RowStatus = "loading" | "ready" | "insufficient" | "error";
 
 interface Row {
@@ -28,6 +28,7 @@ interface Row {
   ichimoku?: ApiIndicatorResult;
   bollinger?: ApiIndicatorResult;
   overall?: ApiIndicatorResult;
+  high52?: ApiIndicatorResult;
 }
 
 export default function TechnicalAnalysisPage() {
@@ -64,7 +65,7 @@ export default function TechnicalAnalysisPage() {
                       rsi: signals.rsi,
                       ichimoku: signals.ichimoku,
                       bollinger: signals.bollinger,
-                      overall: signals.overall,
+                      overall: signals.overall, high52: signals.high52 ?? undefined,
                     }
                   : row,
               ),
@@ -146,7 +147,7 @@ export default function TechnicalAnalysisPage() {
       />
 
       <div className="mb-4">
-        <SignalLegend /><p className="mt-2 text-xs text-muted">Click any badge for details. Bollinger Bands is a contrarian signal: Bullish means price is stretched toward its lower band (a possible bounce), so it can disagree with the trend indicators.</p>
+        <SignalLegend /><p className="mt-2 text-xs text-muted">Click any badge for details. Bollinger Bands is a contrarian signal: Bullish means price is stretched toward its lower band (a possible bounce), so it can disagree with the trend indicators. 52-Week High is a risk gauge, not a buy or sell signal: stocks near their yearly high have historically had smaller dips than stocks far below it.</p>
       </div>
 
       {listError && (
@@ -171,7 +172,7 @@ export default function TechnicalAnalysisPage() {
                     </th>
                   ))}
                   <th className="px-4 py-3 text-center font-medium">
-                    {SIGNAL_LABELS.overall}</th><th className="px-4 py-3 text-center font-medium">{SIGNAL_LABELS.bollinger}
+                    {SIGNAL_LABELS.overall}</th><th className="px-4 py-3 text-center font-medium">{SIGNAL_LABELS.bollinger}</th><th className="px-4 py-3 text-center font-medium">{SIGNAL_LABELS.high52}
                   </th>
                 </tr>
               </thead>
@@ -192,7 +193,7 @@ export default function TechnicalAnalysisPage() {
                       </td>
                     ))}
                     <td className="px-4 py-3 text-center">
-                      {renderCell(row, "overall")}</td><td className="px-4 py-3 text-center">{renderCell(row, "bollinger")}
+                      {renderCell(row, "overall")}</td><td className="px-4 py-3 text-center">{renderCell(row, "bollinger")}</td><td className="px-4 py-3 text-center">{renderCell(row, "high52")}
                     </td>
                   </tr>
                 ))}

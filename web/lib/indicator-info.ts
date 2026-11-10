@@ -38,7 +38,13 @@ export const INDICATOR_INFO: Record<SignalKey, IndicatorInfo> = {
     history:
       "The only indicator whose bullish days beat its bearish days both before and after 2024. Bullish days averaged about +2.6% over the next 20 days vs +2.0% for an average day. The edge is small and shrank in the later period, and its bearish reading did not predict drops.",
   },
-  overall: {
+  high52: {
+    role: "Risk gauge",
+    meaning:
+      "How close price is to its highest close of the past year. Bullish here means near the high, where smaller dips have been typical; Bearish means far below it, where dips have been bigger. It is a risk gauge, not a buy or sell signal.",
+    history:
+      "In backtests, stocks near their 52-week high had smaller dips over the next 20 days (about -3.8%) than stocks far below it (about -5.2%). Direction was not predictable.",
+  },  overall: {
     role: "Trend",
     meaning:
       "A combined vote of DMA, RSI and Ichimoku. Bullish means most of them agree the trend is up. Bollinger Bands is shown separately because it reads the opposite way (dip-buy).",
