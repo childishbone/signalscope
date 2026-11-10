@@ -190,9 +190,6 @@ pytest
 - **Signal weights are not evidence-based** — the weights behind the "Trend"
   signal are manually configured, not statistically validated against
   historical performance. A 5-year backtest of 24 stocks found no dependable up/down edge from DMA, RSI or Ichimoku.
-- **Telegram alerts aren't shown in-app yet** — notifications are sent
-  successfully, but the dashboard's "Recent Alerts" panel doesn't surface
-  them yet (planned for a later phase).
 - **No user accounts** — the watchlist is global/shared, protected only by a
   single admin key for write access, not per-user.
 

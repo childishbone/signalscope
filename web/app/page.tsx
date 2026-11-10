@@ -181,7 +181,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6">
         <Panel title="Recent Signal Changes">
           {signalEventsLoading ? (
             <p className="px-4 py-6 text-sm text-muted">Loading…</p>
@@ -226,13 +226,6 @@ export default function DashboardPage() {
               ))}
             </ul>
           )}
-        </Panel>
-
-        <Panel title="Recent Alerts">
-          <p className="px-4 py-6 text-sm text-muted">
-            No alerts yet — Telegram notifications will appear here once
-            they&apos;re wired up in a later phase.
-          </p>
         </Panel>
       </div>
     </>
