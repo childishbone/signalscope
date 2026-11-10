@@ -39,9 +39,9 @@ export const INDICATOR_INFO: Record<SignalKey, IndicatorInfo> = {
       "The only indicator whose bullish days beat its bearish days both before and after 2024. Bullish days averaged about +2.6% over the next 20 days vs +2.0% for an average day. The edge is small and shrank in the later period, and its bearish reading did not predict drops.",
   },
   overall: {
-    role: "Combined",
+    role: "Trend",
     meaning:
-      "A weighted vote of the indicators in this table. Bullish means most of them lean up.",
+      "A combined vote of DMA, RSI and Ichimoku. Bullish means most of them agree the trend is up. Bollinger Bands is shown separately because it reads the opposite way (dip-buy).",
     history:
       "The combined score has not been backtested on its own, and the individual indicators show no reliable edge in predicting direction, so read it as a summary and not a forecast.",
   },

@@ -66,7 +66,7 @@ def compute_signals_for_security(db: Session, security_id: int) -> SecuritySigna
     rsi = score_rsi(closes)
     ichimoku = score_ichimoku(highs, lows, closes)
     bollinger = score_bollinger(closes)
-    overall = compute_overall(dma=dma, rsi=rsi, ichimoku=ichimoku, bollinger=bollinger)
+    overall = compute_overall(dma=dma, rsi=rsi, ichimoku=ichimoku)
 
     return SecuritySignals(
         dma=dma,

@@ -30,8 +30,8 @@ with a price chart and current signal detail per security.
 - **Four independent technical signals** — Dual Moving Average (DMA), RSI,
   Ichimoku Cloud, and Bollinger Bands, each computed per security and classified
   as Bullish / Neutral / Bearish.
-- **Configurable-weighted Overall signal** — the four indicators are combined
-  into a single transparent "Overall" signal using adjustable weights, so the
+- **Weighted Trend signal** — DMA, RSI and Ichimoku are combined
+  into one transparent "Trend" signal using adjustable weights, so the
   logic isn't a black box.
 - **Signal history** — every time a signal flips state, it's recorded, and
   recent changes surface on the dashboard.
@@ -187,7 +187,7 @@ pytest
   the integration could break if Yahoo changes its page structure.
 - **Bollinger Bands is a contrarian signal** — Bullish means price sits near the lower band, so it can disagree with the
   trend indicators; its backtested edge is small.
-- **Signal weights are not evidence-based** — the weights behind the "Overall"
+- **Signal weights are not evidence-based** — the weights behind the "Trend"
   signal are manually configured, not statistically validated against
   historical performance. A 5-year backtest of 24 stocks found no dependable up/down edge from DMA, RSI or Ichimoku.
 - **Telegram alerts aren't shown in-app yet** — notifications are sent

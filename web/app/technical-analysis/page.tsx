@@ -171,7 +171,7 @@ export default function TechnicalAnalysisPage() {
                     </th>
                   ))}
                   <th className="px-4 py-3 text-center font-medium">
-                    {SIGNAL_LABELS.overall}
+                    {SIGNAL_LABELS.overall}</th><th className="px-4 py-3 text-center font-medium">{SIGNAL_LABELS.bollinger}
                   </th>
                 </tr>
               </thead>
@@ -192,7 +192,7 @@ export default function TechnicalAnalysisPage() {
                       </td>
                     ))}
                     <td className="px-4 py-3 text-center">
-                      {renderCell(row, "overall")}
+                      {renderCell(row, "overall")}</td><td className="px-4 py-3 text-center">{renderCell(row, "bollinger")}
                     </td>
                   </tr>
                 ))}

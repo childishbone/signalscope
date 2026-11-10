@@ -8,69 +8,61 @@ def _result(state: SignalState) -> IndicatorResult:
     return IndicatorResult(state=state, score=0, reasons=[], values={})
 
 
-def test_all_four_bullish_is_bullish() -> None:
+def test_all_three_bullish_is_bullish() -> None:
     result = compute_overall(
         dma=_result(SignalState.BULLISH),
         rsi=_result(SignalState.BULLISH),
         ichimoku=_result(SignalState.BULLISH),
-        bollinger=_result(SignalState.BULLISH),
     )
     assert result.state is SignalState.BULLISH
     assert result.score == 2.0
 
 
-def test_all_four_bearish_is_bearish() -> None:
+def test_all_three_bearish_is_bearish() -> None:
     result = compute_overall(
         dma=_result(SignalState.BEARISH),
         rsi=_result(SignalState.BEARISH),
         ichimoku=_result(SignalState.BEARISH),
-        bollinger=_result(SignalState.BEARISH),
     )
     assert result.state is SignalState.BEARISH
     assert result.score == -2.0
 
 
-def test_all_four_neutral_is_neutral() -> None:
+def test_all_three_neutral_is_neutral() -> None:
     result = compute_overall(
         dma=_result(SignalState.NEUTRAL),
         rsi=_result(SignalState.NEUTRAL),
         ichimoku=_result(SignalState.NEUTRAL),
-        bollinger=_result(SignalState.NEUTRAL),
     )
     assert result.state is SignalState.NEUTRAL
     assert result.score == 0.0
 
 
-def test_lone_dissenting_bollinger_does_not_flip_a_strong_majority() -> None:
-    """Three Bullish indicators plus a Bearish Bollinger Bands should stay
-    Bullish -- Bollinger's halved weight means it can nudge, not override."""
+def test_two_bullish_and_one_neutral_is_bullish() -> None:
     result = compute_overall(
         dma=_result(SignalState.BULLISH),
         rsi=_result(SignalState.BULLISH),
-        ichimoku=_result(SignalState.BULLISH),
-        bollinger=_result(SignalState.BEARISH),
+        ichimoku=_result(SignalState.NEUTRAL),
     )
     assert result.state is SignalState.BULLISH
 
 
-def test_bollinger_alone_cannot_move_a_neutral_majority() -> None:
-    """If DMA, RSI, and Ichimoku are all Neutral, Bollinger Bands' halved
-    weight alone is not enough to push Overall into Bullish or Bearish."""
-    result = compute_overall(
-        dma=_result(SignalState.NEUTRAL),
-        rsi=_result(SignalState.NEUTRAL),
-        ichimoku=_result(SignalState.NEUTRAL),
-        bollinger=_result(SignalState.BULLISH),
-    )
-    assert result.state is SignalState.NEUTRAL
-
-
-def test_evenly_split_indicators_is_neutral() -> None:
+def test_one_dissenting_indicator_leaves_overall_neutral() -> None:
+    """Two Bullish and one Bearish average to +0.67, short of the +1.0
+    threshold, so Overall is Neutral rather than Bullish."""
     result = compute_overall(
         dma=_result(SignalState.BULLISH),
         rsi=_result(SignalState.BULLISH),
         ichimoku=_result(SignalState.BEARISH),
-        bollinger=_result(SignalState.BEARISH),
+    )
+    assert result.state is SignalState.NEUTRAL
+
+
+def test_one_bullish_alone_cannot_move_a_neutral_majority() -> None:
+    result = compute_overall(
+        dma=_result(SignalState.BULLISH),
+        rsi=_result(SignalState.NEUTRAL),
+        ichimoku=_result(SignalState.NEUTRAL),
     )
     assert result.state is SignalState.NEUTRAL
 
@@ -80,11 +72,10 @@ def test_reasons_explain_every_indicators_contribution() -> None:
         dma=_result(SignalState.BULLISH),
         rsi=_result(SignalState.BEARISH),
         ichimoku=_result(SignalState.NEUTRAL),
-        bollinger=_result(SignalState.BULLISH),
     )
     joined = " ".join(result.reasons)
     assert "DMA" in joined
     assert "RSI" in joined
     assert "Ichimoku" in joined
-    assert "Bollinger Bands" in joined
+    assert "Bollinger" not in joined
     assert "Weighted average score" in joined

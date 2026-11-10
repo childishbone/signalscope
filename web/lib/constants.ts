@@ -4,7 +4,7 @@ export const INDICATOR_ORDER: IndicatorKey[] = [
   "dma",
   "rsi",
   "ichimoku",
-  "bollinger",
+  // Bollinger Bands is shown as its own column after Trend.
 ];
 
 export const SIGNAL_LABELS: Record<SignalKey, string> = {
@@ -12,7 +12,7 @@ export const SIGNAL_LABELS: Record<SignalKey, string> = {
   rsi: "RSI",
   ichimoku: "Ichimoku",
   bollinger: "Bollinger Bands",
-  overall: "Overall",
+  overall: "Trend",
 };
 
 export const CANSLIM_LETTER_ORDER = ["C", "A", "N", "S", "L", "M"] as const;
