@@ -1,0 +1,29 @@
+# US large caps, including some that struggled
+AAPL
+MSFT
+NVDA
+JPM
+XOM
+PFE
+INTC
+PYPL
+WBA
+DIS
+VZ
+# US ETFs
+SPY
+QQQ
+# Singapore
+D05.SI
+O39.SI
+Z74.SI
+# Hong Kong
+0700.HK
+0005.HK
+9988.HK
+# Japan, Korea, Taiwan, China
+7203.T
+6758.T
+005930.KS
+2330.TW
+600519.SS
