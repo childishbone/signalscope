@@ -15,6 +15,7 @@ import {
   rsiSeries,
   sma,
 } from "@/lib/indicators";
+import { CloudPrimitive, cloudPoints } from "@/lib/cloud-primitive";
 
 export type ChartOverlay = "bands" | "high" | "dma" | "ichimoku" | "rsi";
 
@@ -126,6 +127,7 @@ export function PriceChart({
 
     if (showIchimoku) {
       const lines = ichimokuLines(dates, highs, lows);
+      series.attachPrimitive(new CloudPrimitive(cloudPoints(lines.senkouA, lines.senkouB)));
       const drawn = [
         { points: lines.tenkan, color: "#22d3ee" },
         { points: lines.kijun, color: "#fb923c" },
