@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { SignalBadge } from "@/components/signal-badge";
 import type { ApiIndicatorResult } from "@/lib/api";
@@ -12,6 +13,7 @@ interface SignalDetailPanelProps {
   info?: IndicatorInfo;
   result: ApiIndicatorResult;
   onClose: () => void;
+  chart?: ReactNode;
 }
 
 export function SignalDetailPanel({
@@ -20,6 +22,7 @@ export function SignalDetailPanel({
   info,
   result,
   onClose,
+  chart,
 }: SignalDetailPanelProps) {
   return (
     <div
@@ -27,7 +30,7 @@ export function SignalDetailPanel({
       onClick={onClose}
     >
       <div
-        className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-panel p-6 shadow-xl"
+        className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-panel p-6 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between">
@@ -53,6 +56,8 @@ export function SignalDetailPanel({
         </div>
 
         {info && <p className="mb-4 text-sm text-muted">{info.meaning}</p>}
+
+        {chart}
 
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
           Why this signal

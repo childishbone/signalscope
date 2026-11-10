@@ -37,6 +37,23 @@ export function bollingerBands(
   return { upper, middle, lower };
 }
 
+/** Simple moving average of the closes, once a full window exists. */
+export function sma(
+  dates: string[],
+  closes: number[],
+  period: number,
+): LinePoint[] {
+  const points: LinePoint[] = [];
+  for (let i = period - 1; i < closes.length; i += 1) {
+    const window = closes.slice(i - period + 1, i + 1);
+    points.push({
+      time: dates[i],
+      value: window.reduce((sum, value) => sum + value, 0) / period,
+    });
+  }
+  return points;
+}
+
 /** Highest close of the trailing `window` days, once a full window exists. */
 export function rollingHigh(
   dates: string[],

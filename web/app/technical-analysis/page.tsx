@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";
 import { SignalBadge, SignalLegend } from "@/components/signal-badge";
+import type { ChartOverlay } from "@/components/price-chart";
+import { SignalChart } from "@/components/signal-chart";
 import { SignalDetailPanel } from "@/components/signal-detail-panel";
 import { INDICATOR_ORDER, SIGNAL_LABELS } from "@/lib/constants";
 import { INDICATOR_INFO } from "@/lib/indicator-info";
@@ -51,6 +53,13 @@ const STATE_RANK: Record<SignalState, number> = {
 };
 
 const FILTER_OPTIONS: StateFilter[] = ["all", "bullish", "neutral", "bearish"];
+
+// Which chart overlay opens switched on for each bubble.
+const OVERLAY_FOR: Partial<Record<IndicatorKey, ChartOverlay>> = {
+  dma: "dma",
+  bollinger: "bands",
+  high52: "high",
+};
 
 export default function TechnicalAnalysisPage() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -334,6 +343,13 @@ export default function TechnicalAnalysisPage() {
           indicatorLabel={SIGNAL_LABELS[selected.key]}
           info={INDICATOR_INFO[selected.key]}
           result={selected.row[selected.key]!}
+          chart={
+            <SignalChart
+              key={`-`}
+              securityId={selected.row.security.id}
+              overlay={OVERLAY_FOR[selected.key]}
+            />
+          }
           onClose={() => setSelected(null)}
         />
       )}
