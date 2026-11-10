@@ -59,6 +59,8 @@ const OVERLAY_FOR: Partial<Record<IndicatorKey, ChartOverlay>> = {
   dma: "dma",
   bollinger: "bands",
   high52: "high",
+  ichimoku: "ichimoku",
+  rsi: "rsi",
 };
 
 export default function TechnicalAnalysisPage() {
