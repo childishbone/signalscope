@@ -41,7 +41,7 @@ def _flat_signals(
         dma=result(dma_state),
         rsi=result(SignalState.NEUTRAL),
         ichimoku=result(SignalState.NEUTRAL),
-        elliott=result(SignalState.NEUTRAL),
+        bollinger=result(SignalState.NEUTRAL),
         overall=result(SignalState.NEUTRAL),
         bars_used=999,
         as_of_date=as_of_date,
@@ -61,7 +61,7 @@ def test_first_recording_creates_rows_but_no_events(db_session: Session) -> None
         )
     )
     assert len(rows) == 5
-    assert {row.indicator for row in rows} == {"dma", "rsi", "ichimoku", "elliott", "overall"}
+    assert {row.indicator for row in rows} == {"dma", "rsi", "ichimoku", "bollinger", "overall"}
     assert all(row.state == "neutral" for row in rows)
 
 

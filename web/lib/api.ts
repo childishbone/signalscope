@@ -55,7 +55,7 @@ export interface ApiSecuritySignals {
   dma: ApiIndicatorResult;
   rsi: ApiIndicatorResult;
   ichimoku: ApiIndicatorResult;
-  elliott: ApiIndicatorResult;
+  bollinger: ApiIndicatorResult;
   overall: ApiIndicatorResult;
 }
 

@@ -1,5 +1,5 @@
 export type SignalState = "bullish" | "neutral" | "bearish";
-export type IndicatorKey = "dma" | "rsi" | "ichimoku" | "elliott";
+export type IndicatorKey = "dma" | "rsi" | "ichimoku" | "bollinger";
 export type SignalKey = IndicatorKey | "overall";
 
 export type CanslimVerdict = "pass" | "fail" | "insufficient_data";

@@ -42,6 +42,6 @@ def get_security_signals(security_id: int, db: Session = Depends(get_db)) -> Sec
         dma=_to_indicator_out(signals.dma),
         rsi=_to_indicator_out(signals.rsi),
         ichimoku=_to_indicator_out(signals.ichimoku),
-        elliott=_to_indicator_out(signals.elliott),
+        bollinger=_to_indicator_out(signals.bollinger),
         overall=_to_indicator_out(signals.overall),
     )

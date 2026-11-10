@@ -10,12 +10,12 @@ weights are non-negative.
 Weights (all in WEIGHTS below, easy to tune without touching the logic):
   DMA, RSI, and Ichimoku each get a weight of 1.0 -- they're all
   well-established, rule-based technical indicators.
-  Elliott Wave gets a weight of 0.5 -- deliberately half the others,
-  because it is the one indicator that is a heuristic estimate rather
-  than an objective reading of the chart (see signals/elliott.py). This
-  ensures Elliott Wave alone can never push the Overall signal into
-  Bullish or Bearish; it can only nudge a signal the other three
-  indicators already lean toward.
+  Bollinger Bands gets a weight of 0.5 -- deliberately half the others.
+  It is a contrarian reading (Bullish means price is stretched toward the
+  lower band), which can point the opposite way to the three trend
+  indicators, and a five-year backtest found only a small edge. At half
+  weight it can nudge a signal the other three lean toward, but can never
+  push the Overall signal into Bullish or Bearish on its own.
 
 Final weighted average >= BULLISH_THRESHOLD -> Bullish
 Final weighted average <= BEARISH_THRESHOLD -> Bearish
@@ -39,7 +39,7 @@ STATE_SCORE: dict[SignalState, float] = {
 WEIGHT_DMA = 1.0
 WEIGHT_RSI = 1.0
 WEIGHT_ICHIMOKU = 1.0
-WEIGHT_ELLIOTT = 0.5
+WEIGHT_BOLLINGER = 0.5
 
 BULLISH_THRESHOLD = 1.0
 BEARISH_THRESHOLD = -1.0
@@ -49,14 +49,14 @@ def compute_overall(
     dma: IndicatorResult,
     rsi: IndicatorResult,
     ichimoku: IndicatorResult,
-    elliott: IndicatorResult,
+    bollinger: IndicatorResult,
 ) -> IndicatorResult:
     """Combine the four indicator results into one Overall signal."""
     weighted_indicators = [
         ("DMA", dma, WEIGHT_DMA),
         ("RSI", rsi, WEIGHT_RSI),
         ("Ichimoku", ichimoku, WEIGHT_ICHIMOKU),
-        ("Elliott Wave", elliott, WEIGHT_ELLIOTT),
+        ("Bollinger Bands", bollinger, WEIGHT_BOLLINGER),
     ]
 
     total_weight = sum(weight for _, _, weight in weighted_indicators)
@@ -89,7 +89,7 @@ def compute_overall(
             "dma_contribution": round(STATE_SCORE[dma.state] * WEIGHT_DMA, 4),
             "rsi_contribution": round(STATE_SCORE[rsi.state] * WEIGHT_RSI, 4),
             "ichimoku_contribution": round(STATE_SCORE[ichimoku.state] * WEIGHT_ICHIMOKU, 4),
-            "elliott_contribution": round(STATE_SCORE[elliott.state] * WEIGHT_ELLIOTT, 4),
+            "bollinger_contribution": round(STATE_SCORE[bollinger.state] * WEIGHT_BOLLINGER, 4),
             "weighted_average": round(weighted_average, 4),
         },
     )

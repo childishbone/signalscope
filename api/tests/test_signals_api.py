@@ -59,7 +59,7 @@ def test_signals_endpoint_returns_all_five_signals(db_session: Session) -> None:
         assert response.status_code == 200
         body = response.json()
         assert body["bars_used"] == 260
-        for key in ("dma", "rsi", "ichimoku", "elliott", "overall"):
+        for key in ("dma", "rsi", "ichimoku", "bollinger", "overall"):
             assert key in body
             assert body[key]["state"] in ("bullish", "neutral", "bearish")
             assert len(body[key]["reasons"]) > 0

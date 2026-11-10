@@ -15,7 +15,7 @@ import {
   getWatchlist,
 } from "@/lib/api";
 
-type CoreIndicatorKey = "dma" | "rsi" | "ichimoku" | "elliott";
+type CoreIndicatorKey = "dma" | "rsi" | "ichimoku" | "bollinger";
 type IndicatorKey = CoreIndicatorKey | "overall";
 type RowStatus = "loading" | "ready" | "insufficient" | "error";
 
@@ -25,7 +25,7 @@ interface Row {
   dma?: ApiIndicatorResult;
   rsi?: ApiIndicatorResult;
   ichimoku?: ApiIndicatorResult;
-  elliott?: ApiIndicatorResult;
+  bollinger?: ApiIndicatorResult;
   overall?: ApiIndicatorResult;
 }
 
@@ -62,7 +62,7 @@ export default function TechnicalAnalysisPage() {
                       dma: signals.dma,
                       rsi: signals.rsi,
                       ichimoku: signals.ichimoku,
-                      elliott: signals.elliott,
+                      bollinger: signals.bollinger,
                       overall: signals.overall,
                     }
                   : row,

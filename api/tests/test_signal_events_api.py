@@ -39,7 +39,7 @@ def _flat_signals(
         dma=result(dma_state),
         rsi=result(SignalState.NEUTRAL),
         ichimoku=result(SignalState.NEUTRAL),
-        elliott=result(SignalState.NEUTRAL),
+        bollinger=result(SignalState.NEUTRAL),
         overall=result(SignalState.NEUTRAL),
         bars_used=999,
         as_of_date=as_of_date,

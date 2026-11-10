@@ -19,5 +19,5 @@ class SecuritySignalsOut(BaseModel):
     dma: IndicatorResultOut
     rsi: IndicatorResultOut
     ichimoku: IndicatorResultOut
-    elliott: IndicatorResultOut
+    bollinger: IndicatorResultOut
     overall: IndicatorResultOut

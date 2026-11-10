@@ -134,7 +134,7 @@ def record_signals(db: Session, security_id: int, signals: SecuritySignals) -> l
         "dma": signals.dma,
         "rsi": signals.rsi,
         "ichimoku": signals.ichimoku,
-        "elliott": signals.elliott,
+        "bollinger": signals.bollinger,
         "overall": signals.overall,
     }
 

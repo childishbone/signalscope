@@ -28,7 +28,7 @@ with a price chart and current signal detail per security.
   markets, add or remove it, and view its price history on an interactive
   candlestick chart.
 - **Four independent technical signals** — Dual Moving Average (DMA), RSI,
-  Ichimoku Cloud, and Elliott Wave, each computed per security and classified
+  Ichimoku Cloud, and Bollinger Bands, each computed per security and classified
   as Bullish / Neutral / Bearish.
 - **Configurable-weighted Overall signal** — the four indicators are combined
   into a single transparent "Overall" signal using adjustable weights, so the
@@ -185,11 +185,11 @@ pytest
   so the first request after a period of idle time can take 30-60s.
 - **Yahoo Finance is unofficial** — `yfinance` has no SLA; data can lag, and
   the integration could break if Yahoo changes its page structure.
-- **Elliott Wave is inherently subjective** — wave-counting is more
-  interpretive than DMA/RSI/Ichimoku; treat it as directional, not precise.
-- **Signal weights aren't backtested** — the weights behind the "Overall"
+- **Bollinger Bands is a contrarian signal** — Bullish means price sits near the lower band, so it can disagree with the
+  trend indicators; its backtested edge is small.
+- **Signal weights are not evidence-based** — the weights behind the "Overall"
   signal are manually configured, not statistically validated against
-  historical performance.
+  historical performance. A 5-year backtest of 24 stocks found no dependable up/down edge from DMA, RSI or Ichimoku.
 - **Telegram alerts aren't shown in-app yet** — notifications are sent
   successfully, but the dashboard's "Recent Alerts" panel doesn't surface
   them yet (planned for a later phase).

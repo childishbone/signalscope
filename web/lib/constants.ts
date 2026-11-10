@@ -4,14 +4,14 @@ export const INDICATOR_ORDER: IndicatorKey[] = [
   "dma",
   "rsi",
   "ichimoku",
-  "elliott",
+  "bollinger",
 ];
 
 export const SIGNAL_LABELS: Record<SignalKey, string> = {
   dma: "DMA",
   rsi: "RSI",
   ichimoku: "Ichimoku",
-  elliott: "Elliott Wave",
+  bollinger: "Bollinger Bands",
   overall: "Overall",
 };
 

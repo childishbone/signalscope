@@ -50,7 +50,7 @@ def test_compute_signals_returns_all_five_with_enough_bars(db_session: Session) 
 
     assert result is not None
     assert result.bars_used == 260
-    for indicator in (result.dma, result.rsi, result.ichimoku, result.elliott, result.overall):
+    for indicator in (result.dma, result.rsi, result.ichimoku, result.bollinger, result.overall):
         assert len(indicator.reasons) > 0
 
 

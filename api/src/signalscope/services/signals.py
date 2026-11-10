@@ -7,10 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from signalscope.db.models import DailyBar
+from signalscope.signals.bollinger import MINIMUM_CLOSES_REQUIRED as BOLLINGER_MINIMUM_REQUIRED
+from signalscope.signals.bollinger import score_bollinger
 from signalscope.signals.dma import MINIMUM_CLOSES_REQUIRED as DMA_MINIMUM_REQUIRED
 from signalscope.signals.dma import score_dma
-from signalscope.signals.elliott import MINIMUM_CLOSES_REQUIRED as ELLIOTT_MINIMUM_REQUIRED
-from signalscope.signals.elliott import score_elliott_wave
 from signalscope.signals.ichimoku import MINIMUM_BARS_REQUIRED as ICHIMOKU_MINIMUM_REQUIRED
 from signalscope.signals.ichimoku import score_ichimoku
 from signalscope.signals.overall import compute_overall
@@ -24,7 +24,7 @@ MINIMUM_BARS_REQUIRED = max(
     DMA_MINIMUM_REQUIRED,
     RSI_MINIMUM_REQUIRED,
     ICHIMOKU_MINIMUM_REQUIRED,
-    ELLIOTT_MINIMUM_REQUIRED,
+    BOLLINGER_MINIMUM_REQUIRED,
 )
 
 
@@ -36,7 +36,7 @@ class SecuritySignals:
     dma: IndicatorResult
     rsi: IndicatorResult
     ichimoku: IndicatorResult
-    elliott: IndicatorResult
+    bollinger: IndicatorResult
     overall: IndicatorResult
     bars_used: int
     as_of_date: date
@@ -65,14 +65,14 @@ def compute_signals_for_security(db: Session, security_id: int) -> SecuritySigna
     dma = score_dma(closes)
     rsi = score_rsi(closes)
     ichimoku = score_ichimoku(highs, lows, closes)
-    elliott = score_elliott_wave(closes)
-    overall = compute_overall(dma=dma, rsi=rsi, ichimoku=ichimoku, elliott=elliott)
+    bollinger = score_bollinger(closes)
+    overall = compute_overall(dma=dma, rsi=rsi, ichimoku=ichimoku, bollinger=bollinger)
 
     return SecuritySignals(
         dma=dma,
         rsi=rsi,
         ichimoku=ichimoku,
-        elliott=elliott,
+        bollinger=bollinger,
         overall=overall,
         bars_used=len(bars),
         as_of_date=bars[-1].trade_date,

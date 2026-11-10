@@ -21,7 +21,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from signalscope.db.base import Base
 
 _STATES = "('bullish', 'neutral', 'bearish')"
-_INDICATORS = "('dma', 'rsi', 'ichimoku', 'elliott', 'overall')"
+_INDICATORS = "('dma', 'rsi', 'ichimoku', 'elliott', 'bollinger', 'overall')"
 
 
 class Security(Base):

@@ -34,12 +34,12 @@ export const SECURITIES: SecurityQuote[] = [
 ];
 
 export const SIGNAL_ROWS: SignalRow[] = [
-  { ticker: "AAPL", signals: { dma: "bullish", rsi: "bullish", ichimoku: "neutral", elliott: "bullish" }, overall: "bullish" },
-  { ticker: "NVDA", signals: { dma: "bullish", rsi: "bearish", ichimoku: "bullish", elliott: "neutral" }, overall: "neutral" },
-  { ticker: "TSLA", signals: { dma: "bearish", rsi: "neutral", ichimoku: "bearish", elliott: "bearish" }, overall: "bearish" },
-  { ticker: "7203", signals: { dma: "neutral", rsi: "neutral", ichimoku: "bullish", elliott: "neutral" }, overall: "neutral" },
-  { ticker: "0700", signals: { dma: "bullish", rsi: "bullish", ichimoku: "bullish", elliott: "neutral" }, overall: "bullish" },
-  { ticker: "D05", signals: { dma: "neutral", rsi: "bullish", ichimoku: "neutral", elliott: "bearish" }, overall: "neutral" },
+  { ticker: "AAPL", signals: { dma: "bullish", rsi: "bullish", ichimoku: "neutral", bollinger: "bullish" }, overall: "bullish" },
+  { ticker: "NVDA", signals: { dma: "bullish", rsi: "bearish", ichimoku: "bullish", bollinger: "neutral" }, overall: "neutral" },
+  { ticker: "TSLA", signals: { dma: "bearish", rsi: "neutral", ichimoku: "bearish", bollinger: "bearish" }, overall: "bearish" },
+  { ticker: "7203", signals: { dma: "neutral", rsi: "neutral", ichimoku: "bullish", bollinger: "neutral" }, overall: "neutral" },
+  { ticker: "0700", signals: { dma: "bullish", rsi: "bullish", ichimoku: "bullish", bollinger: "neutral" }, overall: "bullish" },
+  { ticker: "D05", signals: { dma: "neutral", rsi: "bullish", ichimoku: "neutral", bollinger: "bearish" }, overall: "neutral" },
 ];
 
 export const SIGNAL_CHANGES: SignalChange[] = [
