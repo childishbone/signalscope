@@ -45,13 +45,19 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from signalscope.signals.bollinger import MINIMUM_CLOSES_REQUIRED as BOLLINGER_MIN
+from signalscope.signals.bollinger import score_bollinger
 from signalscope.signals.dma import MINIMUM_CLOSES_REQUIRED as DMA_MIN
 from signalscope.signals.dma import score_dma
 from signalscope.signals.ichimoku import MINIMUM_BARS_REQUIRED as ICHIMOKU_MIN
 from signalscope.signals.ichimoku import score_ichimoku
+from signalscope.signals.macd import MINIMUM_CLOSES_REQUIRED as MACD_MIN
+from signalscope.signals.macd import score_macd
 from signalscope.signals.rsi import MINIMUM_CLOSES_REQUIRED as RSI_MIN
 from signalscope.signals.rsi import score_rsi
 from signalscope.signals.types import IndicatorResult
+from signalscope.signals.volume import MINIMUM_BARS_REQUIRED as VOLUME_MIN
+from signalscope.signals.volume import score_volume
 
 HORIZONS = (5, 20, 60)
 CACHE_DIR = Path(tempfile.gettempdir()) / "signalscope_backtest_cache"
@@ -70,6 +76,7 @@ class PriceSeries:
     lows: list[float]
     closes: list[float]
     adj_closes: list[float]
+    volumes: list[float]
 
 
 # ---------------------------------------------------------------- data
@@ -78,7 +85,7 @@ class PriceSeries:
 def fetch_series(symbol: str, period: str) -> PriceSeries | None:
     """Download (or load from the local cache) daily bars for one ticker."""
     CACHE_DIR.mkdir(exist_ok=True)
-    cache_file = CACHE_DIR / f"{symbol.replace('/', '_')}_{period}.json"
+    cache_file = CACHE_DIR / f"{symbol.replace('/', '_')}_{period}_v2.json"
 
     if cache_file.exists():
         rows = json.loads(cache_file.read_text())
@@ -105,6 +112,7 @@ def fetch_series(symbol: str, period: str) -> PriceSeries | None:
                 "l": float(bar.low),
                 "c": float(bar.close),
                 "a": float(bar.adj_close if bar.adj_close is not None else bar.close),
+                "v": float(bar.volume),
             }
             for bar in bars
         ]
@@ -117,6 +125,7 @@ def fetch_series(symbol: str, period: str) -> PriceSeries | None:
         lows=[r["l"] for r in rows],
         closes=[r["c"] for r in rows],
         adj_closes=[r["a"] for r in rows],
+        volumes=[r["v"] for r in rows],
     )
 
 
@@ -135,10 +144,25 @@ def _score_ichimoku(s: PriceSeries, end: int) -> IndicatorResult:
     return score_ichimoku(s.highs[:end], s.lows[:end], s.closes[:end])
 
 
+def _score_macd(s: PriceSeries, end: int) -> IndicatorResult:
+    return score_macd(s.closes[:end])
+
+
+def _score_bollinger(s: PriceSeries, end: int) -> IndicatorResult:
+    return score_bollinger(s.closes[:end])
+
+
+def _score_volume(s: PriceSeries, end: int) -> IndicatorResult:
+    return score_volume(s.closes[:end], s.volumes[:end])
+
+
 INDICATORS: dict[str, tuple[int, Callable[[PriceSeries, int], IndicatorResult]]] = {
     "DMA": (DMA_MIN, _score_dma),
     "RSI": (RSI_MIN, _score_rsi),
     "Ichimoku": (ICHIMOKU_MIN, _score_ichimoku),
+    "MACD": (MACD_MIN, _score_macd),
+    "Bollinger": (BOLLINGER_MIN, _score_bollinger),
+    "Volume": (VOLUME_MIN, _score_volume),
 }
 
 
